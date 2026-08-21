@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 
 import {
@@ -3719,39 +3719,82 @@ function Tools() {
     </>
   );
 }
+/* =========================================================
+   LOADING SCREEN
+========================================================= */
 
+function LoadingScreen() {
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 1800);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (!loading) return null;
+
+  return (
+    <div className="loadingScreen">
+      <div className="loadingContent">
+
+        <div className="loadingLogo">
+          <div className="pdfShape">
+            <span>PDF</span>
+          </div>
+        </div>
+
+        <h1>
+          Desi<span>PDF</span>
+        </h1>
+
+        <p>Simple. Fast. Free.</p>
+
+        <div className="loadingBar">
+          <div className="loadingProgress"></div>
+        </div>
+
+      </div>
+    </div>
+  );
+}
 /* =========================================================
    APP
 ========================================================= */
-
 function App() {
-
   return (
-    <Routes>
+    <>
+      <LoadingScreen />
 
-      <Route
-        path="/"
-        element={<Home />}
-      />
+      <Routes>
 
-      <Route
-        path="/tools"
-        element={<Tools />}
-      />
+        <Route
+          path="/"
+          element={<Home />}
+        />
 
-      <Route
-        path="/tool/:id"
-        element={<ToolPage />}
-      />
+        <Route
+          path="/tools"
+          element={<Tools />}
+        />
 
-      <Route
-        path="*"
-        element={<Home />}
-      />
+        <Route
+          path="/tool/:id"
+          element={<ToolPage />}
+        />
 
-    </Routes>
+        <Route
+          path="*"
+          element={<Home />}
+        />
+
+      </Routes>
+    </>
   );
 }
+
 
 /* =========================================================
    START APP

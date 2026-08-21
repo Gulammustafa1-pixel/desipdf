@@ -7,3 +7,165 @@ footer{background:#fafafa;padding:50px 0 20px}.footerGrid{display:grid;grid-temp
 .toolPage{min-height:calc(100vh - 74px);background:#fafafa;padding:45px 0 90px}.back{font-size:13px;color:#666}.toolHero{text-align:center;padding:35px 0 30px}.bigIcon{margin:auto;width:62px;height:62px;border-radius:16px;background:#f7e9e7;color:var(--accent);display:grid;place-items:center}.toolHero .eyebrow{display:block;margin-top:18px}.toolHero h1{font:700 43px "Space Grotesk";letter-spacing:-1.5px;margin:8px 0}.toolHero p{color:#777;margin:0}.workspace{background:#fff;border:1px solid var(--line);border-radius:18px;padding:28px;max-width:820px;margin:auto;box-shadow:0 4px 15px #f700006b}.drop{border:2px dashed #eee;border-radius:14px;text-align:center;padding:58px 20px;transition:.2s}.drop.drag{background:#fff5f3;border-color:var(--accent)}.drop>svg{color:var(--accent)}.drop h3{margin:13px 0 5px}.drop p{color:#888;font-size:13px;margin:0 0 20px}.browse{display:inline-block;background:#171717;color:white;border-radius:9px;padding:11px 17px;font-size:13px;font-weight:700;cursor:pointer}.browse input{display:none}.fileList{margin-top:15px;display:grid;gap:8px}.file{display:flex;align-items:center;gap:10px;padding:12px;border:1px solid var(--line);border-radius:9px}.file svg{color:var(--accent)}.file span{font-size:13px;flex:1}.file small{color:#999}.process{width:100%;margin-top:18px;border:0;border-radius:10px;padding:14px;background:var(--accent);color:#fff;font:700 14px "DM Sans";display:flex;justify-content:center;align-items:center;gap:8px;cursor:pointer}.process:disabled{opacity:.45;cursor:not-allowed}.success,.notice{margin-top:13px;padding:12px;border-radius:9px;font-size:13px}.success{background:#ecf9ef;color:#23733a;display:flex;gap:8px;align-items:center}.notice{background:#fff5dc;color:#765800}.removeBox{margin-top:15px}.removeBox p{font-size:13px;color:#555}.removeBox input{width:100%;padding:12px;border:1px solid #ddd;border-radius:8px}.allTools h1{font:700 48px "Space Grotesk";margin:8px 0}.lead{color:#777;margin-bottom:35px}
 @media(max-width:800px){.nav nav{display:none}.nav nav.mobileOpen{display:flex;position:absolute;top:74px;left:0;right:0;background:#fff;border-bottom:1px solid #ddd;padding:20px;flex-direction:column;gap:18px}.menuBtn{display:block;margin-left:10px}.toolGrid{grid-template-columns:1fr 1fr}.steps,.trustGrid{grid-template-columns:1fr}.footerGrid{grid-template-columns:1fr 1fr}.hero h1{letter-spacing:-2px}}
 @media(max-width:560px){.heroInner{padding:62px 0}.hero h1{font-size:43px}.hero p{font-size:15px}.toolGrid{grid-template-columns:1fr}.section{padding:60px 0}.footerGrid{grid-template-columns:1fr}.nav .login{display:none}.workspace{padding:15px}.toolHero h1{font-size:36px}}
+/* =========================================================
+   DESIPDF LOADING SCREEN
+========================================================= */
+
+.loadingScreen {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: #ffffff;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  animation: loadingFadeIn 0.4s ease;
+}
+
+.loadingContent {
+  width: min(90%, 360px);
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  text-align: center;
+}
+
+.loadingLogo {
+  margin-bottom: 20px;
+  animation: logoFloat 1.4s ease-in-out infinite;
+}
+
+.pdfShape {
+  width: 72px;
+  height: 88px;
+
+  background: #e63946;
+  border-radius: 10px;
+
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+
+  padding-bottom: 16px;
+
+  position: relative;
+
+  box-shadow: 0 12px 30px rgba(230, 57, 70, 0.18);
+}
+
+.pdfShape::before {
+  content: "";
+
+  position: absolute;
+  top: 0;
+  right: 0;
+
+  width: 25px;
+  height: 25px;
+
+  background: #ffffff;
+
+  clip-path: polygon(
+    0 0,
+    100% 100%,
+    0 100%
+  );
+}
+
+.pdfShape span {
+  color: #ffffff;
+
+  font-size: 17px;
+  font-weight: 800;
+
+  letter-spacing: 1px;
+}
+
+.loadingContent h1 {
+  margin: 0;
+
+  color: #111111;
+
+  font-size: 32px;
+  font-weight: 800;
+
+  letter-spacing: -1px;
+}
+
+.loadingContent h1 span {
+  color: #e63946;
+}
+
+.loadingContent p {
+  margin: 7px 0 25px;
+
+  color: #777777;
+
+  font-size: 14px;
+}
+
+.loadingBar {
+  width: 170px;
+  height: 4px;
+
+  background: #eeeeee;
+
+  border-radius: 20px;
+
+  overflow: hidden;
+}
+
+.loadingProgress {
+  width: 45%;
+  height: 100%;
+
+  background: #e63946;
+
+  border-radius: 20px;
+
+  animation: loadingProgress 1.8s ease forwards;
+}
+
+@keyframes loadingProgress {
+  0% {
+    width: 0%;
+  }
+
+  40% {
+    width: 45%;
+  }
+
+  75% {
+    width: 75%;
+  }
+
+  100% {
+    width: 100%;
+  }
+}
+
+@keyframes logoFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-7px);
+  }
+}
+
+@keyframes loadingFadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
