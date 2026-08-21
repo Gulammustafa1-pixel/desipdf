@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 
 import {
@@ -231,7 +231,103 @@ const tools = [
     cat: "PDF Security",
   },
 ];
+const seoData = {
+  "merge-pdf": {
+    title: "Merge PDF Online Free — Combine PDF Files | DesiPDF",
+    description:
+      "Merge multiple PDF files online for free with DesiPDF. Combine PDF files in your preferred order quickly and securely in your browser.",
+  },
 
+  "split-pdf": {
+    title: "Split PDF Online Free — Split PDF Pages | DesiPDF",
+    description:
+      "Split PDF files online for free with DesiPDF. Separate PDF pages into individual files quickly and easily.",
+  },
+
+  "compress-pdf": {
+    title: "Compress PDF Online Free — Reduce PDF Size | DesiPDF",
+    description:
+      "Compress PDF files online for free with DesiPDF. Reduce PDF file size for easier sharing and storage.",
+  },
+
+  "jpg-to-pdf": {
+    title: "JPG to PDF Converter Online Free | DesiPDF",
+    description:
+      "Convert JPG and PNG images to PDF online for free with DesiPDF. Create PDF documents from your images directly in your browser.",
+  },
+
+  "pdf-to-jpg": {
+    title: "PDF to JPG Converter Online Free | DesiPDF",
+    description:
+      "Convert PDF pages to JPG images online for free with DesiPDF. Turn PDF pages into high-quality JPG images directly in your browser.",
+  },
+
+  "pdf-to-word": {
+    title: "PDF to Word Converter Online Free | DesiPDF",
+    description:
+      "Convert PDF files to editable Word documents online for free with DesiPDF. Fast browser-based PDF to Word conversion.",
+  },
+
+  "pdf-to-powerpoint": {
+    title: "PDF to PowerPoint Converter Online Free | DesiPDF",
+    description:
+      "Convert PDF pages to PowerPoint presentations online for free with DesiPDF. Create PPTX files directly in your browser.",
+  },
+
+  "rotate-pdf": {
+    title: "Rotate PDF Online Free — Rotate PDF Pages | DesiPDF",
+    description:
+      "Rotate PDF pages online for free with DesiPDF. Quickly rotate your PDF pages and download the updated document.",
+  },
+
+  "watermark-pdf": {
+    title: "Add Watermark to PDF Online Free | DesiPDF",
+    description:
+      "Add a text watermark to your PDF online for free with DesiPDF. Protect and brand your PDF documents easily.",
+  },
+
+  "page-numbers": {
+    title: "Add Page Numbers to PDF Online Free | DesiPDF",
+    description:
+      "Add page numbers to PDF files online for free with DesiPDF. Number your PDF pages quickly and easily.",
+  },
+
+  "remove-pages": {
+    title: "Remove Pages from PDF Online Free | DesiPDF",
+    description:
+      "Remove unwanted pages from PDF files online for free with DesiPDF. Select and remove PDF pages easily.",
+  },
+
+  "extract-pages": {
+    title: "Extract Pages from PDF Online Free | DesiPDF",
+    description:
+      "Extract selected pages from PDF files online for free with DesiPDF. Create a new PDF from the pages you choose.",
+  },
+
+  "reorder-pages": {
+    title: "Reorder PDF Pages Online Free | DesiPDF",
+    description:
+      "Reorder PDF pages online for free with DesiPDF. Change the order of your PDF pages and download the new document.",
+  },
+
+  "sign-pdf": {
+    title: "Sign PDF Online Free — Add Signature to PDF | DesiPDF",
+    description:
+      "Sign PDF documents online for free with DesiPDF. Add a typed signature to your PDF directly in your browser.",
+  },
+
+  "protect-pdf": {
+    title: "Protect PDF with Password Online Free | DesiPDF",
+    description:
+      "Protect PDF files with a password online using DesiPDF. Add PDF security and control document permissions.",
+  },
+
+  "unlock-pdf": {
+    title: "Unlock PDF Online Free — Remove PDF Password | DesiPDF",
+    description:
+      "Unlock password-protected PDF files online with DesiPDF when you have the valid PDF password.",
+  },
+};
 /* =========================================================
    HEADER
 ========================================================= */
@@ -2655,6 +2751,43 @@ function ToolPage() {
 
   const { id } =
     useParams();
+    useEffect(() => {
+  const seo = seoData[id];
+
+  if (!seo) return;
+
+  document.title = seo.title;
+
+  let descriptionTag = document.querySelector(
+    'meta[name="description"]'
+  );
+
+  if (!descriptionTag) {
+    descriptionTag = document.createElement("meta");
+    descriptionTag.setAttribute("name", "description");
+    document.head.appendChild(descriptionTag);
+  }
+
+  descriptionTag.setAttribute(
+    "content",
+    seo.description
+  );
+
+  let canonicalTag = document.querySelector(
+    'link[rel="canonical"]'
+  );
+
+  if (!canonicalTag) {
+    canonicalTag = document.createElement("link");
+    canonicalTag.setAttribute("rel", "canonical");
+    document.head.appendChild(canonicalTag);
+  }
+
+  canonicalTag.setAttribute(
+    "href",
+    `https://desipdf.online/tool/${id}`
+  );
+}, [id]);
 
   const tool =
     tools.find(
