@@ -2751,6 +2751,120 @@ function ToolPage() {
 
   const { id } =
     useParams();
+    const toolSEO = {
+  "merge-pdf": {
+    title: "Merge PDF Online Free — DesiPDF",
+    description:
+      "Merge multiple PDF files into one document online for free with DesiPDF. Fast, simple and easy PDF merging tool.",
+  },
+  "split-pdf": {
+    title: "Split PDF Online Free — DesiPDF",
+    description:
+      "Split PDF files into separate pages or documents online for free with DesiPDF.",
+  },
+  "compress-pdf": {
+    title: "Compress PDF Online Free — DesiPDF",
+    description:
+      "Compress PDF files online for free with DesiPDF. Reduce PDF file size while keeping your documents easy to use.",
+  },
+  "jpg-to-pdf": {
+    title: "JPG to PDF Converter Online Free — DesiPDF",
+    description:
+      "Convert JPG and image files to PDF online for free with DesiPDF.",
+  },
+  "pdf-to-jpg": {
+    title: "PDF to JPG Converter Online Free — DesiPDF",
+    description:
+      "Convert PDF pages to JPG images online for free with DesiPDF.",
+  },
+  "pdf-to-word": {
+    title: "PDF to Word Converter Online Free — DesiPDF",
+    description:
+      "Convert PDF files to editable Word documents online with DesiPDF.",
+  },
+  "pdf-to-powerpoint": {
+    title: "PDF to PowerPoint Converter Online Free — DesiPDF",
+    description:
+      "Convert PDF files to PowerPoint presentations online with DesiPDF.",
+  },
+  "rotate-pdf": {
+    title: "Rotate PDF Online Free — DesiPDF",
+    description:
+      "Rotate PDF pages online for free with DesiPDF. Easily change the orientation of your PDF pages.",
+  },
+  "watermark-pdf": {
+    title: "Watermark PDF Online Free — DesiPDF",
+    description:
+      "Add a watermark to PDF files online for free with DesiPDF.",
+  },
+  "page-numbers": {
+    title: "Add Page Numbers to PDF Online — DesiPDF",
+    description:
+      "Add page numbers to PDF files online for free with DesiPDF.",
+  },
+  "remove-pages": {
+    title: "Remove Pages from PDF Online — DesiPDF",
+    description:
+      "Remove unwanted pages from PDF files online for free with DesiPDF.",
+  },
+  "extract-pages": {
+    title: "Extract Pages from PDF Online — DesiPDF",
+    description:
+      "Extract selected pages from PDF files online for free with DesiPDF.",
+  },
+  "reorder-pages": {
+    title: "Reorder PDF Pages Online — DesiPDF",
+    description:
+      "Reorder and organize PDF pages online for free with DesiPDF.",
+  },
+  "sign-pdf": {
+    title: "Sign PDF Online Free — DesiPDF",
+    description:
+      "Sign PDF documents online for free with DesiPDF.",
+  },
+  "protect-pdf": {
+    title: "Protect PDF Online Free — DesiPDF",
+    description:
+      "Protect PDF files with a password online using DesiPDF.",
+  },
+  "unlock-pdf": {
+    title: "Unlock PDF Online Free — DesiPDF",
+    description:
+      "Unlock PDF files online with DesiPDF when you have permission to access the document.",
+  }
+};
+
+const seo = toolSEO[id] || {
+  title: "Free Online PDF Tool — DesiPDF",
+  description:
+    "Use free online PDF tools with DesiPDF to manage, convert and edit PDF files."
+};
+
+document.title = seo.title;
+
+const canonicalUrl = `https://desipdf.online/tool/${id}`;
+
+let canonical = document.querySelector('link[rel="canonical"]');
+
+if (!canonical) {
+  canonical = document.createElement("link");
+  canonical.rel = "canonical";
+  document.head.appendChild(canonical);
+}
+
+canonical.href = canonicalUrl;
+
+let metaDescription = document.querySelector(
+  'meta[name="description"]'
+);
+
+if (!metaDescription) {
+  metaDescription = document.createElement("meta");
+  metaDescription.name = "description";
+  document.head.appendChild(metaDescription);
+}
+
+metaDescription.content = seo.description;
     useEffect(() => {
   const seo = seoData[id];
 
