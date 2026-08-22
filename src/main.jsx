@@ -2968,6 +2968,69 @@ if (!metaDescription) {
 }
 
 metaDescription.content = seo.description;
+
+    useEffect(() => {
+      const schemaId = "desipdf-tool-schema";
+      let schema = document.getElementById(schemaId);
+
+      if (!schema) {
+        schema = document.createElement("script");
+        schema.id = schemaId;
+        schema.type = "application/ld+json";
+        document.head.appendChild(schema);
+      }
+
+      const breadcrumbName = content.heading;
+
+      schema.textContent = JSON.stringify({
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "SoftwareApplication",
+            "name": `${breadcrumbName} — DesiPDF`,
+            "url": `https://desipdf.online/tool/${id}`,
+            "description": seo.description,
+            "applicationCategory": "UtilitiesApplication",
+            "operatingSystem": "Web Browser",
+            "browserRequirements": "Requires JavaScript and a modern web browser.",
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD"
+            },
+            "publisher": {
+              "@type": "Organization",
+              "name": "DesiPDF",
+              "url": "https://desipdf.online/"
+            }
+          },
+          {
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Home",
+                "item": "https://desipdf.online/"
+              },
+              {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "All PDF Tools",
+                "item": "https://desipdf.online/tools"
+              },
+              {
+                "@type": "ListItem",
+                "position": 3,
+                "name": breadcrumbName,
+                "item": `https://desipdf.online/tool/${id}`
+              }
+            ]
+          }
+        ]
+      });
+    }, [id, seo.description, content.heading]);
+
     useEffect(() => {
   const seo = seoData[id];
 
@@ -4161,6 +4224,40 @@ function LoadingScreen() {
    APP
 ========================================================= */
 function App() {
+  useEffect(() => {
+    const schemaId = "desipdf-website-schema";
+    let schema = document.getElementById(schemaId);
+
+    if (!schema) {
+      schema = document.createElement("script");
+      schema.id = schemaId;
+      schema.type = "application/ld+json";
+      document.head.appendChild(schema);
+    }
+
+    schema.textContent = JSON.stringify({
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://desipdf.online/#organization",
+          "name": "DesiPDF",
+          "url": "https://desipdf.online/"
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://desipdf.online/#website",
+          "name": "DesiPDF",
+          "url": "https://desipdf.online/",
+          "publisher": {
+            "@id": "https://desipdf.online/#organization"
+          },
+          "description": "Free online PDF tools to merge, split, compress, convert, rotate, watermark, sign and protect PDF files."
+        }
+      ]
+    });
+  }, []);
+
   return (
     <>
       <LoadingScreen />
