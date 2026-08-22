@@ -3942,6 +3942,18 @@ function Tools() {
         <h1>
           All PDF Tools
         </h1>
+        <div className="seo-content">
+  <p>
+    DesiPDF is a free online PDF toolkit that helps you manage your
+    documents quickly and easily. Merge, split, compress, convert,
+    rotate, watermark, sign and protect PDF files directly in your browser.
+  </p>
+
+  <p>
+    Choose a PDF tool below to get started. DesiPDF is designed to make
+    everyday PDF tasks simple without requiring complicated software.
+  </p>
+</div>
 
         <p className="lead">
           Choose the tool you need.
@@ -3959,6 +3971,41 @@ function Tools() {
           )}
 
         </div>
+        <section className="faq-section">
+  <h2>Frequently Asked Questions About PDF Tools</h2>
+
+  <div className="faq-item">
+    <h3>Are DesiPDF tools free?</h3>
+    <p>
+      Yes. DesiPDF provides free online PDF tools for common document
+      tasks such as merging, splitting, compressing and converting PDFs.
+    </p>
+  </div>
+
+  <div className="faq-item">
+    <h3>Can I use DesiPDF without installing software?</h3>
+    <p>
+      Yes. DesiPDF is designed to work directly in your web browser,
+      so you can access the available PDF tools online.
+    </p>
+  </div>
+
+  <div className="faq-item">
+    <h3>What PDF tools are available?</h3>
+    <p>
+      DesiPDF includes tools for merging, splitting, compressing,
+      converting, rotating, watermarking, signing and protecting PDF files.
+    </p>
+  </div>
+
+  <div className="faq-item">
+    <h3>Can I use DesiPDF on a phone?</h3>
+    <p>
+      Yes. DesiPDF is designed with a responsive interface so the website
+      can be used on desktop and mobile browsers.
+    </p>
+  </div>
+</section>
 
       </main>
 
