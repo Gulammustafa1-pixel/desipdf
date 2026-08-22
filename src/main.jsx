@@ -2833,6 +2833,109 @@ function ToolPage() {
       "Unlock PDF files online with DesiPDF when you have permission to access the document.",
   }
 };
+const toolContent = {
+  "merge-pdf": {
+    heading: "Merge PDF Files Online Free",
+    text: "Combine multiple PDF files into one document quickly and easily with DesiPDF. Upload your PDF files, arrange them in the order you want, and merge them into a single PDF.",
+    related: ["split-pdf", "compress-pdf", "pdf-to-jpg"]
+  },
+
+  "split-pdf": {
+    heading: "Split PDF Online Free",
+    text: "Split a PDF into separate pages or smaller PDF documents with DesiPDF. Easily extract the pages you need from your PDF file.",
+    related: ["merge-pdf", "extract-pages", "remove-pages"]
+  },
+
+  "compress-pdf": {
+    heading: "Compress PDF Online Free",
+    text: "Reduce the size of your PDF files with DesiPDF. Compress large PDF documents to make them easier to store, share and upload.",
+    related: ["merge-pdf", "split-pdf", "pdf-to-jpg"]
+  },
+
+  "jpg-to-pdf": {
+    heading: "JPG to PDF Converter Online Free",
+    text: "Convert JPG and image files into PDF documents online with DesiPDF. Create a PDF from your images quickly and easily.",
+    related: ["pdf-to-jpg", "merge-pdf", "compress-pdf"]
+  },
+
+  "pdf-to-jpg": {
+    heading: "PDF to JPG Converter Online Free",
+    text: "Convert PDF pages into JPG images online with DesiPDF. Extract pages from your PDF as high-quality images.",
+    related: ["jpg-to-pdf", "compress-pdf", "split-pdf"]
+  },
+
+  "pdf-to-word": {
+    heading: "PDF to Word Converter Online Free",
+    text: "Convert PDF documents into editable Word files with DesiPDF. Quickly transform your PDF documents for editing and reuse.",
+    related: ["pdf-to-powerpoint", "compress-pdf", "merge-pdf"]
+  },
+
+  "pdf-to-powerpoint": {
+    heading: "PDF to PowerPoint Converter Online Free",
+    text: "Convert PDF documents into PowerPoint presentations with DesiPDF and make your documents easier to present and edit.",
+    related: ["pdf-to-word", "compress-pdf", "merge-pdf"]
+  },
+
+  "rotate-pdf": {
+    heading: "Rotate PDF Pages Online Free",
+    text: "Rotate PDF pages online with DesiPDF. Correct the orientation of individual pages and create an organized PDF document.",
+    related: ["merge-pdf", "split-pdf", "compress-pdf"]
+  },
+
+  "watermark-pdf": {
+    heading: "Add Watermark to PDF Online Free",
+    text: "Add a watermark to your PDF documents with DesiPDF. Protect and identify your documents by adding customized watermark text.",
+    related: ["protect-pdf", "sign-pdf", "merge-pdf"]
+  },
+
+  "page-numbers": {
+    heading: "Add Page Numbers to PDF Online",
+    text: "Add page numbers to your PDF documents with DesiPDF. Organize long PDF files and make them easier to navigate.",
+    related: ["reorder-pages", "merge-pdf", "split-pdf"]
+  },
+
+  "remove-pages": {
+    heading: "Remove Pages from PDF Online Free",
+    text: "Remove unwanted pages from PDF files with DesiPDF. Select the pages you no longer need and create a cleaner PDF.",
+    related: ["extract-pages", "split-pdf", "reorder-pages"]
+  },
+
+  "extract-pages": {
+    heading: "Extract Pages from PDF Online Free",
+    text: "Extract selected pages from PDF documents with DesiPDF. Create a new PDF containing only the pages you need.",
+    related: ["remove-pages", "split-pdf", "merge-pdf"]
+  },
+
+  "reorder-pages": {
+    heading: "Reorder PDF Pages Online Free",
+    text: "Rearrange PDF pages online with DesiPDF. Organize your document in the correct order before downloading your PDF.",
+    related: ["merge-pdf", "remove-pages", "extract-pages"]
+  },
+
+  "sign-pdf": {
+    heading: "Sign PDF Online Free",
+    text: "Sign PDF documents online with DesiPDF. Add your signature to documents without needing additional PDF software.",
+    related: ["watermark-pdf", "protect-pdf", "merge-pdf"]
+  },
+
+  "protect-pdf": {
+    heading: "Protect PDF with Password Online",
+    text: "Protect PDF documents with DesiPDF. Add password protection to help keep your PDF files secure.",
+    related: ["unlock-pdf", "sign-pdf", "watermark-pdf"]
+  },
+
+  "unlock-pdf": {
+    heading: "Unlock PDF Online Free",
+    text: "Unlock PDF files with DesiPDF when you have permission to access the document. Remove supported PDF restrictions and work with your file more easily.",
+    related: ["protect-pdf", "merge-pdf", "compress-pdf"]
+  }
+};
+
+const content = toolContent[id] || {
+  heading: "Free Online PDF Tool",
+  text: "Use DesiPDF to work with PDF files online.",
+  related: ["merge-pdf", "split-pdf", "compress-pdf"]
+};
 
 const seo = toolSEO[id] || {
   title: "Free Online PDF Tool — DesiPDF",
