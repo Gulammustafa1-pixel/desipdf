@@ -859,6 +859,16 @@ function parsePageNumbers(value) {
   return pages;
 }
 
+async function downloadZip(files, zipName) {
+  const zip = new JSZip();
+  for (const item of files) {
+    if (!item?.blob) continue;
+    zip.file(item.name, item.blob);
+  }
+  const blob = await zip.generateAsync({ type: "blob", compression: "DEFLATE", compressionOptions: { level: 6 } });
+  download(blob, zipName);
+}
+
 /* =========================================================
    MERGE PDF
 ========================================================= */
@@ -906,9 +916,34 @@ async function splitPDF(file) {
 ========================================================= */
 
 async function compressPDF(file) {
-  const pdf = await PDFDocument.load(await file.arrayBuffer());
-  const bytes = await pdf.save({ useObjectStreams: true, addDefaultPage: false });
-  return new Blob([bytes], { type: "application/pdf" });
+  const original = new Blob([await file.arrayBuffer()], { type: "application/pdf" });
+  const pdf = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
+  const output = new jsPDF({ unit: "pt", format: "a4" });
+
+  for (let pageNo = 1; pageNo <= pdf.numPages; pageNo++) {
+    if (pageNo > 1) output.addPage();
+    const page = await pdf.getPage(pageNo);
+    const viewport = page.getViewport({ scale: 1.35 });
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.ceil(viewport.width);
+    canvas.height = Math.ceil(viewport.height);
+    const context = canvas.getContext("2d", { alpha: false });
+    await page.render({ canvasContext: context, viewport }).promise;
+
+    const image = canvas.toDataURL("image/jpeg", 0.68);
+    const pageWidth = 595;
+    const pageHeight = 842;
+    const ratio = Math.min(pageWidth / viewport.width, pageHeight / viewport.height);
+    const w = viewport.width * ratio;
+    const h = viewport.height * ratio;
+    output.addImage(image, "JPEG", (pageWidth - w) / 2, (pageHeight - h) / 2, w, h, undefined, "FAST");
+    canvas.width = 1;
+    canvas.height = 1;
+  }
+
+  const rebuilt = output.output("blob");
+  // Never make a file larger just because compression was requested.
+  return rebuilt.size < original.size ? rebuilt : original;
 }
 
 /* =========================================================
@@ -916,29 +951,47 @@ async function compressPDF(file) {
 ========================================================= */
 
 async function imageToPDF(files) {
-  const pdf = new jsPDF({ unit: "pt", format: "a4" });
+  if (!files.length) throw new Error("Please select at least one image.");
+
+  const firstData = await fileData(files[0]);
+  const firstImg = new window.Image();
+  await new Promise((resolve, reject) => {
+    firstImg.onload = resolve;
+    firstImg.onerror = reject;
+    firstImg.src = firstData;
+  });
+
+  const firstPortrait = firstImg.height >= firstImg.width;
+  const firstOrientation = firstPortrait ? "portrait" : "landscape";
+  const pdf = new jsPDF({ unit: "pt", format: "a4", orientation: firstOrientation });
 
   for (let i = 0; i < files.length; i++) {
-    if (i > 0) pdf.addPage();
+    const data = i === 0 ? firstData : await fileData(files[i]);
+    const img = i === 0 ? firstImg : new window.Image();
 
-    const data = await fileData(files[i]);
-    const img = new window.Image();
+    if (i > 0) {
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+        img.src = data;
+      });
+    }
 
-    await new Promise((resolve, reject) => {
-      img.onload = resolve;
-      img.onerror = reject;
-      img.src = data;
-    });
+    const portrait = img.height >= img.width;
+    const pageWidth = portrait ? 595 : 842;
+    const pageHeight = portrait ? 842 : 595;
+    if (i > 0) {
+      pdf.addPage([pageWidth, pageHeight], portrait ? "portrait" : "landscape");
+    }
 
-    const pageWidth = 595;
-    const pageHeight = 842;
-    const margin = 35;
+    const margin = 28;
     const maxWidth = pageWidth - margin * 2;
     const maxHeight = pageHeight - margin * 2;
     const ratio = Math.min(maxWidth / img.width, maxHeight / img.height);
+    const w = img.width * ratio;
+    const h = img.height * ratio;
     const imageType = files[i].type === "image/png" ? "PNG" : "JPEG";
-
-    pdf.addImage(data, imageType, margin, margin, img.width * ratio, img.height * ratio);
+    pdf.addImage(data, imageType, (pageWidth - w) / 2, (pageHeight - h) / 2, w, h, undefined, "FAST");
   }
 
   return pdf.output("blob");
@@ -1709,6 +1762,16 @@ function ToolPage() {
       return;
     }
 
+    if (id === "jpg-to-pdf" && files.some((f) => !/^image\/(jpeg|png)$/i.test(f.type))) {
+      setMsg("JPG to PDF accepts JPG, JPEG and PNG images only.");
+      return;
+    }
+
+    if (id === "pdf-to-jpg" && files[0].type && files[0].type !== "application/pdf") {
+      setMsg("Please select a valid PDF file.");
+      return;
+    }
+
     setBusy(true);
     setDone(false);
     setMsg("");
@@ -1721,10 +1784,7 @@ function ToolPage() {
         download(blob, "merged.pdf");
       } else if (id === "split-pdf") {
         const pages = await splitPDF(files[0]);
-        for (const page of pages) {
-          download(page.blob, page.name);
-          await sleep(250);
-        }
+        await downloadZip(pages, "split-pages.zip");
       } else if (id === "compress-pdf") {
         blob = await compressPDF(files[0]);
         download(blob, "compressed.pdf");
@@ -1733,31 +1793,28 @@ function ToolPage() {
         download(blob, "images.pdf");
       } else if (id === "pdf-to-jpg") {
         const images = await pdfToJPG(files[0]);
-        for (const image of images) {
-          download(image.blob, image.name);
-          await sleep(250);
-        }
+        await downloadZip(images, "pdf-pages.zip");
       } else if (id === "word-to-pdf") {
         blob = await wordToPDF(files[0]);
-        download(blob, "converted.pdf");
+        download(blob, "word-to-pdf.pdf");
       } else if (id === "pdf-to-word") {
         blob = await pdfToWord(files[0]);
-        download(blob, "converted.docx");
+        download(blob, "pdf-to-word.docx");
       } else if (id === "powerpoint-to-pdf") {
         blob = await powerPointToPDF(files[0]);
-        download(blob, "converted.pdf");
+        download(blob, "powerpoint-to-pdf.pdf");
       } else if (id === "pdf-to-powerpoint") {
         blob = await pdfToPowerPoint(files[0]);
-        download(blob, "converted.pptx");
+        download(blob, "pdf-to-powerpoint.pptx");
       } else if (id === "excel-to-pdf") {
         blob = await excelToPDF(files[0]);
-        download(blob, "converted.pdf");
+        download(blob, "excel-to-pdf.pdf");
       } else if (id === "pdf-to-excel") {
         blob = await pdfToExcel(files[0]);
-        download(blob, "converted.xlsx");
+        download(blob, "pdf-to-excel.xlsx");
       } else if (id === "html-to-pdf") {
         blob = await htmlToPDF(files[0]);
-        download(blob, "converted.pdf");
+        download(blob, "html-to-pdf.pdf");
       } else if (id === "pdf-to-pdfa") {
         blob = await pdfToPDFA(files[0]);
         download(blob, "archived-pdfa.pdf");
@@ -2136,6 +2193,9 @@ function LoadingScreen() {
     </div>
   );
 }
+
+/* 22 tools are implemented in this single file. Office conversions are browser-side
+   and preserve extractable content; they are not a full Microsoft Office rendering engine. */
 
 /* =========================================================
    APP
