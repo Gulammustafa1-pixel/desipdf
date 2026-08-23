@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
-
 import {
   BrowserRouter,
   Routes,
@@ -54,6 +53,8 @@ import { decryptPDF, isEncrypted } from "@pdfsmaller/pdf-decrypt";
 
 import "./styles.css";
 
+const SITE_URL = "https://desipdf.online";
+
 /* =========================================================
    PDF.JS WORKER
 ========================================================= */
@@ -67,267 +68,487 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
    TOOLS
 ========================================================= */
 
-const tools = [
-  {
-    id: "merge-pdf",
-    name: "Merge PDF",
-    desc: "Combine PDFs in the order you want.",
-    icon: Merge,
-    cat: "Organize PDF",
-  },
-  {
-    id: "split-pdf",
-    name: "Split PDF",
-    desc: "Separate PDF pages into individual files.",
-    icon: Scissors,
-    cat: "Organize PDF",
-  },
-  {
-    id: "compress-pdf",
-    name: "Compress PDF",
-    desc: "Reduce PDF file size for easy sharing.",
-    icon: Minimize2,
-    cat: "Optimize PDF",
-  },
-
-  {
-    id: "jpg-to-pdf",
-    name: "JPG to PDF",
-    desc: "Convert images into a PDF document.",
-    icon: ImageIcon,
-    cat: "Convert PDF",
-  },
-  {
-    id: "pdf-to-jpg",
-    name: "PDF to JPG",
-    desc: "Convert PDF pages into images.",
-    icon: ImageIcon,
-    cat: "Convert PDF",
-  },
-
-  {
-    id: "word-to-pdf",
-    name: "WORD to PDF",
-    desc: "Convert Word documents into PDF files.",
-    icon: FileText,
-    cat: "Convert PDF",
-  },
-  {
-    id: "pdf-to-word",
-    name: "PDF to WORD",
-    desc: "Convert PDF text into an editable Word document.",
-    icon: FileText,
-    cat: "Convert PDF",
-  },
-
-  {
-    id: "powerpoint-to-pdf",
-    name: "POWERPOINT to PDF",
-    desc: "Convert PowerPoint presentations into PDF.",
-    icon: Presentation,
-    cat: "Convert PDF",
-  },
-  {
-    id: "pdf-to-powerpoint",
-    name: "PDF to POWERPOINT",
-    desc: "Convert PDF pages into a PowerPoint presentation.",
-    icon: Presentation,
-    cat: "Convert PDF",
-  },
-
-  {
-    id: "excel-to-pdf",
-    name: "EXCEL to PDF",
-    desc: "Convert Excel spreadsheets into PDF files.",
-    icon: FileSpreadsheet,
-    cat: "Convert PDF",
-  },
-  {
-    id: "pdf-to-excel",
-    name: "PDF to EXCEL",
-    desc: "Extract PDF text into an Excel spreadsheet.",
-    icon: Table2,
-    cat: "Convert PDF",
-  },
-
-  {
-    id: "html-to-pdf",
-    name: "HTML to PDF",
-    desc: "Convert an HTML file into a PDF.",
-    icon: Code2,
-    cat: "Convert PDF",
-  },
-  {
-    id: "pdf-to-pdfa",
-    name: "PDF to PDF/A",
-    desc: "Create a long-term archival PDF copy.",
-    icon: FileText,
-    cat: "Convert PDF",
-  },
-
-  {
-    id: "rotate-pdf",
-    name: "Rotate PDF",
-    desc: "Rotate all PDF pages.",
-    icon: RotateCw,
-    cat: "Edit PDF",
-  },
-  {
-    id: "watermark-pdf",
-    name: "Watermark PDF",
-    desc: "Add a text watermark to every page.",
-    icon: Stamp,
-    cat: "Edit PDF",
-  },
-  {
-    id: "page-numbers",
-    name: "Page Numbers",
-    desc: "Add page numbers to your PDF.",
-    icon: Hash,
-    cat: "Edit PDF",
-  },
-
-  {
-    id: "remove-pages",
-    name: "Remove Pages",
-    desc: "Remove selected pages from a PDF.",
-    icon: Trash2,
-    cat: "Organize PDF",
-  },
-  {
-    id: "extract-pages",
-    name: "Extract Pages",
-    desc: "Extract selected pages into a new PDF.",
-    icon: Copy,
-    cat: "Organize PDF",
-  },
-  {
-    id: "reorder-pages",
-    name: "Reorder Pages",
-    desc: "Change the order of PDF pages.",
-    icon: ListOrdered,
-    cat: "Organize PDF",
-  },
-
-  {
-    id: "sign-pdf",
-    name: "Sign PDF",
-    desc: "Add your signature to a PDF.",
-    icon: PenTool,
-    cat: "Edit PDF",
-  },
-  {
-    id: "protect-pdf",
-    name: "Protect PDF",
-    desc: "Protect your PDF with a password.",
-    icon: LockKeyhole,
-    cat: "PDF Security",
-  },
-  {
-    id: "unlock-pdf",
-    name: "Unlock PDF",
-    desc: "Unlock a PDF using its valid password.",
-    icon: UnlockKeyhole,
-    cat: "PDF Security",
-  },
+const CATEGORIES = [
+  "All",
+  "Organize PDF",
+  "Optimize PDF",
+  "Convert PDF",
+  "Edit PDF",
+  "PDF Security",
 ];
-const seoData = {
+
+const tools = [
+  { id: "merge-pdf", name: "Merge PDF", desc: "Combine PDFs in the order you want.", icon: Merge, cat: "Organize PDF" },
+  { id: "split-pdf", name: "Split PDF", desc: "Separate PDF pages into individual files.", icon: Scissors, cat: "Organize PDF" },
+  { id: "compress-pdf", name: "Compress PDF", desc: "Reduce PDF file size for easy sharing.", icon: Minimize2, cat: "Optimize PDF" },
+
+  { id: "jpg-to-pdf", name: "JPG to PDF", desc: "Convert images into a PDF document.", icon: ImageIcon, cat: "Convert PDF" },
+  { id: "pdf-to-jpg", name: "PDF to JPG", desc: "Convert PDF pages into images.", icon: ImageIcon, cat: "Convert PDF" },
+
+  { id: "word-to-pdf", name: "WORD to PDF", desc: "Convert Word documents into PDF files.", icon: FileText, cat: "Convert PDF" },
+  { id: "pdf-to-word", name: "PDF to WORD", desc: "Convert PDF text into an editable Word document.", icon: FileText, cat: "Convert PDF" },
+
+  { id: "powerpoint-to-pdf", name: "POWERPOINT to PDF", desc: "Convert PowerPoint presentations into PDF.", icon: Presentation, cat: "Convert PDF" },
+  { id: "pdf-to-powerpoint", name: "PDF to POWERPOINT", desc: "Convert PDF pages into a PowerPoint presentation.", icon: Presentation, cat: "Convert PDF" },
+
+  { id: "excel-to-pdf", name: "EXCEL to PDF", desc: "Convert Excel spreadsheets into PDF files.", icon: FileSpreadsheet, cat: "Convert PDF" },
+  { id: "pdf-to-excel", name: "PDF to EXCEL", desc: "Extract PDF text into an Excel spreadsheet.", icon: Table2, cat: "Convert PDF" },
+
+  { id: "html-to-pdf", name: "HTML to PDF", desc: "Convert an HTML file into a PDF.", icon: Code2, cat: "Convert PDF" },
+  { id: "pdf-to-pdfa", name: "PDF to PDF/A", desc: "Create a long-term archival PDF copy.", icon: FileText, cat: "Convert PDF" },
+
+  { id: "rotate-pdf", name: "Rotate PDF", desc: "Rotate all PDF pages.", icon: RotateCw, cat: "Edit PDF" },
+  { id: "watermark-pdf", name: "Watermark PDF", desc: "Add a text watermark to every page.", icon: Stamp, cat: "Edit PDF" },
+  { id: "page-numbers", name: "Page Numbers", desc: "Add page numbers to your PDF.", icon: Hash, cat: "Edit PDF" },
+
+  { id: "remove-pages", name: "Remove Pages", desc: "Remove selected pages from a PDF.", icon: Trash2, cat: "Organize PDF" },
+  { id: "extract-pages", name: "Extract Pages", desc: "Extract selected pages into a new PDF.", icon: Copy, cat: "Organize PDF" },
+  { id: "reorder-pages", name: "Reorder Pages", desc: "Change the order of PDF pages.", icon: ListOrdered, cat: "Organize PDF" },
+
+  { id: "sign-pdf", name: "Sign PDF", desc: "Add your signature to a PDF.", icon: PenTool, cat: "Edit PDF" },
+  { id: "protect-pdf", name: "Protect PDF", desc: "Protect your PDF with a password.", icon: LockKeyhole, cat: "PDF Security" },
+  { id: "unlock-pdf", name: "Unlock PDF", desc: "Unlock a PDF using its valid password.", icon: UnlockKeyhole, cat: "PDF Security" },
+];
+
+/* =========================================================
+   TOOL CONTENT (single source of truth)
+   title/description -> <title> and meta description
+   heading/text       -> intro copy shown on the tool page
+   howTo/faqs         -> optional extra SEO copy + FAQ schema
+   related            -> ids shown as "related tools" (currently
+                          available for future use on the tool page)
+========================================================= */
+
+const TOOL_CONTENT = {
   "merge-pdf": {
     title: "Merge PDF Online Free — Combine PDF Files | DesiPDF",
-    description:
-      "Merge multiple PDF files online for free with DesiPDF. Combine PDF files in your preferred order quickly and securely in your browser.",
+    description: "Merge multiple PDF files online for free with DesiPDF. Combine PDF files in your preferred order quickly and securely in your browser.",
+    heading: "Merge PDF Files Online Free",
+    text: "Combine multiple PDF files into one document quickly and easily with DesiPDF. Upload your PDF files, arrange them in the order you want, and merge them into a single PDF.",
+    howTo: [
+      "Upload the PDF files you want to combine.",
+      "Arrange the files in the order you need.",
+      "Click the merge button to combine your PDFs.",
+      "Download your merged PDF.",
+    ],
+    faqs: [
+      ["Can I merge multiple PDF files?", "Yes. DesiPDF lets you combine multiple PDF files into one document."],
+      ["Is the Merge PDF tool free?", "Yes. DesiPDF provides the Merge PDF tool free online."],
+      ["Do I need to install software?", "No. You can use the tool directly in your web browser."],
+    ],
+    related: ["split-pdf", "compress-pdf", "pdf-to-jpg"],
   },
 
   "split-pdf": {
     title: "Split PDF Online Free — Split PDF Pages | DesiPDF",
-    description:
-      "Split PDF files online for free with DesiPDF. Separate PDF pages into individual files quickly and easily.",
+    description: "Split PDF files online for free with DesiPDF. Separate PDF pages into individual files quickly and easily.",
+    heading: "Split PDF Online Free",
+    text: "Split a PDF into separate pages or smaller PDF documents with DesiPDF. Easily extract the pages you need from your PDF file.",
+    howTo: [
+      "Upload your PDF file.",
+      "Select the pages or page ranges you want to split.",
+      "Start the PDF splitting process.",
+      "Download your separated PDF files.",
+    ],
+    faqs: [
+      ["Can I split a PDF by pages?", "Yes. You can select pages or page ranges from your PDF."],
+      ["Is Split PDF free?", "Yes. DesiPDF provides a free online PDF splitting tool."],
+      ["Can I use it on mobile?", "Yes. The tool works in modern desktop and mobile browsers."],
+    ],
+    related: ["merge-pdf", "extract-pages", "remove-pages"],
   },
 
   "compress-pdf": {
     title: "Compress PDF Online Free — Reduce PDF Size | DesiPDF",
-    description:
-      "Compress PDF files online for free with DesiPDF. Reduce PDF file size for easier sharing and storage.",
+    description: "Compress PDF files online for free with DesiPDF. Reduce PDF file size for easier sharing and storage.",
+    heading: "Compress PDF Online Free",
+    text: "Reduce the size of your PDF files with DesiPDF. Compress large PDF documents to make them easier to store, share and upload.",
+    howTo: [
+      "Upload your PDF file.",
+      "Start the compression process.",
+      "Wait for your compressed PDF to be generated.",
+      "Download the smaller PDF file.",
+    ],
+    faqs: [
+      ["What does PDF compression do?", "PDF compression reduces the file size of a PDF to make it easier to store and share."],
+      ["Is PDF compression free?", "Yes. DesiPDF offers a free online PDF compression tool."],
+      ["Can I compress PDFs from my phone?", "Yes. You can use the tool from a supported mobile browser."],
+    ],
+    related: ["merge-pdf", "split-pdf", "pdf-to-jpg"],
   },
 
   "jpg-to-pdf": {
     title: "JPG to PDF Converter Online Free | DesiPDF",
-    description:
-      "Convert JPG and PNG images to PDF online for free with DesiPDF. Create PDF documents from your images directly in your browser.",
+    description: "Convert JPG and PNG images to PDF online for free with DesiPDF. Create PDF documents from your images directly in your browser.",
+    heading: "JPG to PDF Converter Online Free",
+    text: "Convert JPG and image files into PDF documents online with DesiPDF. Create a PDF from your images quickly and easily.",
+    howTo: [
+      "Upload your JPG images.",
+      "Arrange the images if needed.",
+      "Start the conversion.",
+      "Download your PDF document.",
+    ],
+    faqs: [
+      ["Can I convert JPG images to PDF?", "Yes. DesiPDF converts JPG images into PDF documents online."],
+      ["Is JPG to PDF free?", "Yes. The JPG to PDF converter is available online for free."],
+      ["Can I convert multiple images?", "The tool can process the supported image files you upload."],
+    ],
+    related: ["pdf-to-jpg", "merge-pdf", "compress-pdf"],
   },
 
   "pdf-to-jpg": {
     title: "PDF to JPG Converter Online Free | DesiPDF",
-    description:
-      "Convert PDF pages to JPG images online for free with DesiPDF. Turn PDF pages into high-quality JPG images directly in your browser.",
+    description: "Convert PDF pages to JPG images online for free with DesiPDF. Turn PDF pages into high-quality JPG images directly in your browser.",
+    heading: "PDF to JPG Converter Online Free",
+    text: "Convert PDF pages into JPG images online with DesiPDF. Extract pages from your PDF as high-quality images.",
+    howTo: [
+      "Upload your PDF document.",
+      "Start the PDF to JPG conversion.",
+      "Wait for the pages to be converted.",
+      "Download your JPG images.",
+    ],
+    faqs: [
+      ["Can I convert PDF pages to JPG?", "Yes. DesiPDF can convert supported PDF pages into JPG images."],
+      ["Is PDF to JPG free?", "Yes. DesiPDF provides a free online PDF to JPG converter."],
+      ["Do I need special software?", "No. You can use the converter directly in your browser."],
+    ],
+    related: ["jpg-to-pdf", "compress-pdf", "split-pdf"],
+  },
+
+  "word-to-pdf": {
+    title: "WORD to PDF Converter Online Free | DesiPDF",
+    description: "Convert Word documents to PDF online for free with DesiPDF. Create PDF files from your .docx documents directly in your browser.",
+    heading: "Word to PDF Converter Online Free",
+    text: "Convert Word documents into PDF files with DesiPDF. Upload your .docx file and get a shareable PDF version in seconds.",
+    howTo: [
+      "Upload your Word (.docx) document.",
+      "Start the Word to PDF conversion.",
+      "Wait for the conversion to finish.",
+      "Download your PDF file.",
+    ],
+    faqs: [
+      ["Can I convert Word to PDF online?", "Yes. DesiPDF converts .docx files into PDF documents online."],
+      ["Is Word to PDF free?", "Yes. The tool is available online for free."],
+      ["Does formatting stay the same?", "Basic text content is preserved; complex layouts may render differently."],
+    ],
+    related: ["pdf-to-word", "merge-pdf", "compress-pdf"],
   },
 
   "pdf-to-word": {
     title: "PDF to Word Converter Online Free | DesiPDF",
-    description:
-      "Convert PDF files to editable Word documents online for free with DesiPDF. Fast browser-based PDF to Word conversion.",
+    description: "Convert PDF files to editable Word documents online for free with DesiPDF. Fast browser-based PDF to Word conversion.",
+    heading: "PDF to Word Converter Online Free",
+    text: "Convert PDF documents into editable Word files with DesiPDF. Quickly transform your PDF documents for editing and reuse.",
+    howTo: [
+      "Upload your PDF file.",
+      "Start the PDF to Word conversion.",
+      "Wait for the conversion to finish.",
+      "Download your Word document.",
+    ],
+    faqs: [
+      ["Can I convert PDF to Word online?", "Yes. DesiPDF provides an online PDF to Word conversion tool."],
+      ["Is PDF to Word free?", "Yes. DesiPDF offers the tool online for free."],
+      ["Can I edit the converted Word file?", "The converted file is intended to be used as an editable Word document."],
+    ],
+    related: ["pdf-to-powerpoint", "compress-pdf", "merge-pdf"],
+  },
+
+  "powerpoint-to-pdf": {
+    title: "POWERPOINT to PDF Converter Online Free | DesiPDF",
+    description: "Convert PowerPoint presentations to PDF online for free with DesiPDF. Create shareable PDFs from your .pptx slides.",
+    heading: "PowerPoint to PDF Converter Online Free",
+    text: "Convert PowerPoint presentations into PDF documents with DesiPDF. Turn your slides into a PDF you can share with anyone.",
+    howTo: [
+      "Upload your PowerPoint (.pptx) file.",
+      "Start the PowerPoint to PDF conversion.",
+      "Wait for processing to complete.",
+      "Download your PDF file.",
+    ],
+    faqs: [
+      ["Can I convert PowerPoint to PDF?", "Yes. DesiPDF converts .pptx presentations into PDF documents."],
+      ["Is the converter free?", "Yes. The tool is available online for free."],
+      ["Are slide notes included?", "The conversion focuses on slide text content."],
+    ],
+    related: ["pdf-to-powerpoint", "merge-pdf", "compress-pdf"],
   },
 
   "pdf-to-powerpoint": {
     title: "PDF to PowerPoint Converter Online Free | DesiPDF",
-    description:
-      "Convert PDF pages to PowerPoint presentations online for free with DesiPDF. Create PPTX files directly in your browser.",
+    description: "Convert PDF pages to PowerPoint presentations online for free with DesiPDF. Create PPTX files directly in your browser.",
+    heading: "PDF to PowerPoint Converter Online Free",
+    text: "Convert PDF documents into PowerPoint presentations with DesiPDF and make your documents easier to present and edit.",
+    howTo: [
+      "Upload your PDF.",
+      "Start the PDF to PowerPoint conversion.",
+      "Wait for processing to complete.",
+      "Download your PowerPoint presentation.",
+    ],
+    faqs: [
+      ["Can I convert PDF to PowerPoint?", "Yes. DesiPDF provides an online PDF to PowerPoint converter."],
+      ["Is the converter free?", "Yes. The tool is available online for free."],
+      ["Do I need PowerPoint installed?", "No, the conversion happens online before you download the file."],
+    ],
+    related: ["pdf-to-word", "compress-pdf", "merge-pdf"],
+  },
+
+  "excel-to-pdf": {
+    title: "EXCEL to PDF Converter Online Free | DesiPDF",
+    description: "Convert Excel spreadsheets to PDF online for free with DesiPDF. Turn your .xlsx sheets into a shareable PDF.",
+    heading: "Excel to PDF Converter Online Free",
+    text: "Convert Excel spreadsheets into PDF documents with DesiPDF. Upload your spreadsheet and get a print-ready PDF version.",
+    howTo: [
+      "Upload your Excel (.xlsx, .xls or .csv) file.",
+      "Start the Excel to PDF conversion.",
+      "Wait for processing to complete.",
+      "Download your PDF file.",
+    ],
+    faqs: [
+      ["Can I convert Excel to PDF online?", "Yes. DesiPDF converts spreadsheet files into PDF documents."],
+      ["Is Excel to PDF free?", "Yes. The tool is available online for free."],
+      ["Are formulas converted?", "Cell values are converted as displayed; formulas themselves are not preserved."],
+    ],
+    related: ["pdf-to-excel", "compress-pdf", "merge-pdf"],
+  },
+
+  "pdf-to-excel": {
+    title: "PDF to EXCEL Converter Online Free | DesiPDF",
+    description: "Extract PDF text into an Excel spreadsheet online for free with DesiPDF.",
+    heading: "PDF to Excel Converter Online Free",
+    text: "Extract text from your PDF into an Excel spreadsheet with DesiPDF, making tabular data easier to work with.",
+    howTo: [
+      "Upload your PDF file.",
+      "Start the PDF to Excel conversion.",
+      "Wait for the extraction to finish.",
+      "Download your Excel spreadsheet.",
+    ],
+    faqs: [
+      ["Can I convert PDF to Excel online?", "Yes. DesiPDF extracts PDF text into an .xlsx spreadsheet."],
+      ["Is PDF to Excel free?", "Yes. The tool is available online for free."],
+      ["Does it work on scanned PDFs?", "The tool extracts selectable text; scanned/image-only PDFs may not extract well."],
+    ],
+    related: ["excel-to-pdf", "compress-pdf", "merge-pdf"],
+  },
+
+  "html-to-pdf": {
+    title: "HTML to PDF Converter Online Free | DesiPDF",
+    description: "Convert an HTML file into a PDF online for free with DesiPDF.",
+    heading: "HTML to PDF Converter Online Free",
+    text: "Convert HTML files into PDF documents with DesiPDF, directly in your browser, with no server upload required.",
+    howTo: [
+      "Upload your HTML file.",
+      "Start the HTML to PDF conversion.",
+      "Wait for processing to complete.",
+      "Download your PDF file.",
+    ],
+    faqs: [
+      ["Can I convert HTML to PDF online?", "Yes. DesiPDF renders your HTML file and converts it into a PDF."],
+      ["Is HTML to PDF free?", "Yes. The tool is available online for free."],
+      ["Will external images and scripts load?", "Only content that renders within the uploaded file is captured."],
+    ],
+    related: ["merge-pdf", "compress-pdf", "pdf-to-pdfa"],
+  },
+
+  "pdf-to-pdfa": {
+    title: "PDF to PDF/A Online Free | DesiPDF",
+    description: "Create a long-term archival PDF copy online for free with DesiPDF.",
+    heading: "PDF to PDF/A Online Free",
+    text: "Create a browser-generated, archival-style copy of your PDF with DesiPDF. Note: this produces a PDF/A-style copy for long-term storage, not a fully validated, standards-certified PDF/A file.",
+    howTo: [
+      "Upload your PDF.",
+      "Start the PDF/A conversion.",
+      "Wait for processing to complete.",
+      "Download your archival-style PDF.",
+    ],
+    faqs: [
+      ["Is this a certified PDF/A file?", "No. This tool creates a browser-generated archival-style copy and does not guarantee full PDF/A standards compliance."],
+      ["Is the tool free?", "Yes. The tool is available online for free."],
+      ["Why use this?", "It's useful for creating a simple, self-contained long-term copy of a PDF's visual content."],
+    ],
+    related: ["compress-pdf", "merge-pdf", "html-to-pdf"],
   },
 
   "rotate-pdf": {
     title: "Rotate PDF Online Free — Rotate PDF Pages | DesiPDF",
-    description:
-      "Rotate PDF pages online for free with DesiPDF. Quickly rotate your PDF pages and download the updated document.",
+    description: "Rotate PDF pages online for free with DesiPDF. Quickly rotate your PDF pages and download the updated document.",
+    heading: "Rotate PDF Pages Online Free",
+    text: "Rotate PDF pages online with DesiPDF. Correct the orientation of individual pages and create an organized PDF document.",
+    howTo: [
+      "Upload your PDF.",
+      "Start the rotation process.",
+      "Every page rotates 90°.",
+      "Download the rotated PDF.",
+    ],
+    faqs: [
+      ["Can I rotate individual PDF pages?", "The current tool rotates every page in the document by 90°."],
+      ["Is Rotate PDF free?", "Yes. DesiPDF provides a free online Rotate PDF tool."],
+      ["Can I rotate a PDF without software?", "Yes. You can use the tool directly in your browser."],
+    ],
+    related: ["merge-pdf", "split-pdf", "compress-pdf"],
   },
 
   "watermark-pdf": {
     title: "Add Watermark to PDF Online Free | DesiPDF",
-    description:
-      "Add a text watermark to your PDF online for free with DesiPDF. Protect and brand your PDF documents easily.",
+    description: "Add a text watermark to your PDF online for free with DesiPDF. Protect and brand your PDF documents easily.",
+    heading: "Add Watermark to PDF Online Free",
+    text: "Add a watermark to your PDF documents with DesiPDF. Protect and identify your documents by adding customized watermark text.",
+    howTo: [
+      "Upload your PDF.",
+      "Enter your watermark text.",
+      "Apply the watermark to your document.",
+      "Download the watermarked PDF.",
+    ],
+    faqs: [
+      ["Can I add a watermark to a PDF?", "Yes. DesiPDF lets you add a diagonal text watermark to every page."],
+      ["Is the Watermark PDF tool free?", "Yes. The tool is available online for free."],
+      ["Can I use custom text as a watermark?", "Yes. Enter any text you'd like to appear as the watermark."],
+    ],
+    related: ["protect-pdf", "sign-pdf", "merge-pdf"],
   },
 
   "page-numbers": {
     title: "Add Page Numbers to PDF Online Free | DesiPDF",
-    description:
-      "Add page numbers to PDF files online for free with DesiPDF. Number your PDF pages quickly and easily.",
+    description: "Add page numbers to PDF files online for free with DesiPDF. Number your PDF pages quickly and easily.",
+    heading: "Add Page Numbers to PDF Online",
+    text: "Add page numbers to your PDF documents with DesiPDF. Organize long PDF files and make them easier to navigate.",
+    howTo: [
+      "Upload your PDF.",
+      "Start the page numbering process.",
+      "Numbers are added to the bottom of every page.",
+      "Download the updated PDF.",
+    ],
+    faqs: [
+      ["Can I add page numbers to a PDF?", "Yes. DesiPDF provides an online page numbering tool."],
+      ["Is it free?", "Yes. The DesiPDF page numbering tool is available online for free."],
+      ["Can I use the tool in a browser?", "Yes. It works directly in supported web browsers."],
+    ],
+    related: ["reorder-pages", "merge-pdf", "split-pdf"],
   },
 
   "remove-pages": {
     title: "Remove Pages from PDF Online Free | DesiPDF",
-    description:
-      "Remove unwanted pages from PDF files online for free with DesiPDF. Select and remove PDF pages easily.",
+    description: "Remove unwanted pages from PDF files online for free with DesiPDF. Select and remove PDF pages easily.",
+    heading: "Remove Pages from PDF Online Free",
+    text: "Remove unwanted pages from PDF files with DesiPDF. Select the pages you no longer need and create a cleaner PDF.",
+    howTo: [
+      "Upload your PDF.",
+      "Enter the page numbers you want to remove.",
+      "Apply the changes.",
+      "Download your updated PDF.",
+    ],
+    faqs: [
+      ["Can I delete pages from a PDF?", "Yes. DesiPDF lets you remove unwanted PDF pages."],
+      ["Is Remove Pages free?", "Yes. The tool is available online for free."],
+      ["Can I remove multiple pages?", "Yes. Enter multiple page numbers separated by commas."],
+    ],
+    related: ["extract-pages", "split-pdf", "reorder-pages"],
   },
 
   "extract-pages": {
     title: "Extract Pages from PDF Online Free | DesiPDF",
-    description:
-      "Extract selected pages from PDF files online for free with DesiPDF. Create a new PDF from the pages you choose.",
+    description: "Extract selected pages from PDF files online for free with DesiPDF. Create a new PDF from the pages you choose.",
+    heading: "Extract Pages from PDF Online Free",
+    text: "Extract selected pages from PDF documents with DesiPDF. Create a new PDF containing only the pages you need.",
+    howTo: [
+      "Upload your PDF.",
+      "Enter the page numbers you want to extract.",
+      "Start the extraction process.",
+      "Download the new PDF.",
+    ],
+    faqs: [
+      ["Can I extract specific PDF pages?", "Yes. You can select the pages you need from a supported PDF."],
+      ["Is Extract PDF Pages free?", "Yes. DesiPDF provides the tool online for free."],
+      ["Will the original PDF be changed?", "No. The extraction process creates a separate output document."],
+    ],
+    related: ["remove-pages", "split-pdf", "merge-pdf"],
   },
 
   "reorder-pages": {
     title: "Reorder PDF Pages Online Free | DesiPDF",
-    description:
-      "Reorder PDF pages online for free with DesiPDF. Change the order of your PDF pages and download the new document.",
+    description: "Reorder PDF pages online for free with DesiPDF. Change the order of your PDF pages and download the new document.",
+    heading: "Reorder PDF Pages Online Free",
+    text: "Rearrange PDF pages online with DesiPDF. Organize your document in the correct order before downloading your PDF.",
+    howTo: [
+      "Upload your PDF.",
+      "Enter the complete new page order.",
+      "Apply the new page order.",
+      "Download your reordered PDF.",
+    ],
+    faqs: [
+      ["Can I change the order of PDF pages?", "Yes. DesiPDF provides an online PDF page reordering tool."],
+      ["Is Reorder PDF free?", "Yes. The tool is available online for free."],
+      ["Do I need to install software?", "No. You can use the tool directly in your browser."],
+    ],
+    related: ["merge-pdf", "remove-pages", "extract-pages"],
   },
 
   "sign-pdf": {
     title: "Sign PDF Online Free — Add Signature to PDF | DesiPDF",
-    description:
-      "Sign PDF documents online for free with DesiPDF. Add a typed signature to your PDF directly in your browser.",
+    description: "Sign PDF documents online for free with DesiPDF. Add a typed signature to your PDF directly in your browser.",
+    heading: "Sign PDF Online Free",
+    text: "Sign PDF documents online with DesiPDF. Add your signature to documents without needing additional PDF software.",
+    howTo: [
+      "Upload your PDF.",
+      "Type your signature and choose its position.",
+      "Apply the signature to the page.",
+      "Download the signed PDF.",
+    ],
+    faqs: [
+      ["Can I sign a PDF online?", "Yes. DesiPDF provides an online PDF signing tool."],
+      ["Is Sign PDF free?", "Yes. The tool is available online for free."],
+      ["Can I use the tool without installing software?", "Yes. You can use it directly in a supported browser."],
+    ],
+    related: ["watermark-pdf", "protect-pdf", "merge-pdf"],
   },
 
   "protect-pdf": {
     title: "Protect PDF with Password Online Free | DesiPDF",
-    description:
-      "Protect PDF files with a password online using DesiPDF. Add PDF security and control document permissions.",
+    description: "Protect PDF files with a password online using DesiPDF. Add PDF security and control document permissions.",
+    heading: "Protect PDF with Password Online",
+    text: "Protect PDF documents with DesiPDF. Add password protection and control permissions to help keep your PDF files secure.",
+    howTo: [
+      "Upload your PDF.",
+      "Enter a password and choose permissions.",
+      "Apply protection to the PDF.",
+      "Download your protected PDF.",
+    ],
+    faqs: [
+      ["Can I protect a PDF online?", "Yes. DesiPDF provides an online PDF protection tool."],
+      ["Is Protect PDF free?", "Yes. The tool is available online for free."],
+      ["Why protect a PDF?", "Password protection helps restrict who can open or modify your document."],
+    ],
+    related: ["unlock-pdf", "sign-pdf", "watermark-pdf"],
   },
 
   "unlock-pdf": {
     title: "Unlock PDF Online Free — Remove PDF Password | DesiPDF",
-    description:
-      "Unlock password-protected PDF files online with DesiPDF when you have the valid PDF password.",
+    description: "Unlock password-protected PDF files online with DesiPDF when you have the valid PDF password.",
+    heading: "Unlock PDF Online Free",
+    text: "Unlock PDF files with DesiPDF when you have permission to access the document. Remove supported PDF password restrictions and work with your file more easily.",
+    howTo: [
+      "Upload the protected PDF.",
+      "Enter the current PDF password.",
+      "Start the unlocking process.",
+      "Download the unlocked PDF.",
+    ],
+    faqs: [
+      ["Can I unlock a protected PDF?", "DesiPDF can process supported PDFs when you provide the correct password."],
+      ["Is Unlock PDF free?", "Yes. The tool is available online for free."],
+      ["Should I unlock a PDF I do not own?", "Only unlock or modify documents when you have the necessary permission."],
+    ],
+    related: ["protect-pdf", "merge-pdf", "compress-pdf"],
   },
 };
+
+const DEFAULT_TOOL_CONTENT = {
+  title: "Free Online PDF Tool — DesiPDF",
+  description: "Use free online PDF tools with DesiPDF to manage, convert and edit PDF files.",
+  heading: "Free Online PDF Tool",
+  text: "Use DesiPDF to work with PDF files online.",
+  howTo: [],
+  faqs: [],
+  related: ["merge-pdf", "split-pdf", "compress-pdf"],
+};
+
 /* =========================================================
    HEADER
 ========================================================= */
@@ -338,7 +559,6 @@ function Header() {
   return (
     <header className="header">
       <div className="nav container">
-
         <Link to="/" className="brand">
           <span className="brandMark">D</span>
           <span>
@@ -347,36 +567,18 @@ function Header() {
         </Link>
 
         <nav className={open ? "mobileOpen" : ""}>
-          <Link to="/" onClick={() => setOpen(false)}>
-            Home
-          </Link>
-
-          <Link to="/tools" onClick={() => setOpen(false)}>
-            All Tools
-          </Link>
-
-          <a href="/#how" onClick={() => setOpen(false)}>
-            How it works
-          </a>
-
-          <a href="/#about" onClick={() => setOpen(false)}>
-            About
-          </a>
+          <Link to="/" onClick={() => setOpen(false)}>Home</Link>
+          <Link to="/tools" onClick={() => setOpen(false)}>All Tools</Link>
+          <a href="/#how" onClick={() => setOpen(false)}>How it works</a>
+          <a href="/#about" onClick={() => setOpen(false)}>About</a>
         </nav>
 
         <div className="navActions">
-          <Link className="login" to="/tools">
-            Try Tools
-          </Link>
-
-          <button
-            className="menuBtn"
-            onClick={() => setOpen(!open)}
-          >
+          <Link className="login" to="/tools">Try Tools</Link>
+          <button className="menuBtn" onClick={() => setOpen(!open)}>
             {open ? <X /> : <Menu />}
           </button>
         </div>
-
       </div>
     </header>
   );
@@ -388,22 +590,26 @@ function Header() {
 
 function Home() {
   const [q, setQ] = useState("");
+  const [activeCategory, setActiveCategory] = useState("All");
 
-  const filtered = tools.filter((t) =>
-    `${t.name} ${t.desc} ${t.cat}`
-      .toLowerCase()
-      .includes(q.toLowerCase())
-  );
+  const filtered = useMemo(() => {
+    const query = q.toLowerCase();
+    return tools.filter((tool) => {
+      const matchesQuery = `${tool.name} ${tool.desc} ${tool.cat}`
+        .toLowerCase()
+        .includes(query);
+      const matchesCategory =
+        activeCategory === "All" || tool.cat === activeCategory;
+      return matchesQuery && matchesCategory;
+    });
+  }, [q, activeCategory]);
 
   return (
     <>
       <Header />
-
       <main>
-
         <section className="hero">
           <div className="container heroInner">
-
             <div className="pill">
               <Zap size={15} />
               Simple. Fast. Free.
@@ -415,102 +621,61 @@ function Home() {
               <em>All in one place.</em>
             </h1>
 
-            <p>
-              Merge, split, compress, convert,
-              edit and protect your PDFs.
-            </p>
+            <p>Merge, split, compress, convert, edit and protect your PDFs.</p>
 
             <div className="heroSearch">
               <Search size={20} />
-
               <input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 placeholder="Search for a PDF tool..."
               />
             </div>
-
           </div>
         </section>
 
         <section id="tools" className="section container">
-
           <div className="sectionHead">
-
             <div>
-              <span className="eyebrow">
-                DESIPDF TOOLS
-              </span>
-
-              <h2>
-                Everything for your PDFs
-              </h2>
+              <span className="eyebrow">DESIPDF TOOLS</span>
+              <h2>Everything for your PDFs</h2>
             </div>
-
-            <span className="count">
-              {filtered.length} tools
-            </span>
-
+            <span className="count">{filtered.length} tools</span>
           </div>
 
           <div className="categories">
-            {[
-              "All",
-              "Organize PDF",
-              "Optimize PDF",
-              "Convert PDF",
-              "Edit PDF",
-              "PDF Security",
-            ].map((c) => (
-              <a key={c} href="#tools">
+            {CATEGORIES.map((c) => (
+              <a
+                key={c}
+                href="#tools"
+                className={activeCategory === c ? "active" : ""}
+                onClick={(e) => {
+                  e.preventDefault();
+                  setActiveCategory(c);
+                }}
+              >
                 {c}
               </a>
             ))}
           </div>
 
           <div className="toolGrid">
-
             {filtered.map((tool) => (
-              <ToolCard
-                key={tool.id}
-                tool={tool}
-              />
+              <ToolCard key={tool.id} tool={tool} />
             ))}
-
           </div>
-
         </section>
 
         <section id="how" className="how">
-
           <div className="container">
-
-            <span className="eyebrow">
-              HOW IT WORKS
-            </span>
-
-            <h2>
-              PDF editing made simple
-            </h2>
+            <span className="eyebrow">HOW IT WORKS</span>
+            <h2>PDF editing made simple</h2>
 
             <div className="steps">
-
               {[
-                [
-                  "01",
-                  "Choose a tool",
-                  "Pick the PDF task you want.",
-                ],
-                [
-                  "02",
-                  "Upload your file",
-                  "Choose your PDF, Word, Excel or other file.",
-                ],
-                [
-                  "03",
-                  "Process & download",
-                  "DesiPDF processes your file.",
-                ],
+                ["01", "Choose a tool", "Pick the PDF task you want."],
+                ["02", "Upload your file", "Choose your PDF, Word, Excel or other file."],
+                ["03", "Process & download", "DesiPDF processes your file."],
               ].map((s) => (
                 <div className="step" key={s[0]}>
                   <b>{s[0]}</b>
@@ -518,60 +683,30 @@ function Home() {
                   <p>{s[2]}</p>
                 </div>
               ))}
-
             </div>
-
           </div>
-
         </section>
 
         <section id="about" className="trust">
-
           <div className="container trustGrid">
-
             <div>
               <Shield size={30} />
-
-              <h3>
-                Privacy first
-              </h3>
-
-              <p>
-                Your files are processed directly
-                in your browser wherever possible.
-              </p>
+              <h3>Privacy first</h3>
+              <p>Your files are processed directly in your browser wherever possible.</p>
             </div>
-
             <div>
               <Zap size={30} />
-
-              <h3>
-                Fast workflow
-              </h3>
-
-              <p>
-                Simple tools with no unnecessary steps.
-              </p>
+              <h3>Fast workflow</h3>
+              <p>Simple tools with no unnecessary steps.</p>
             </div>
-
             <div>
               <Globe size={30} />
-
-              <h3>
-                Works anywhere
-              </h3>
-
-              <p>
-                Use DesiPDF on desktop, tablet or mobile.
-              </p>
+              <h3>Works anywhere</h3>
+              <p>Use DesiPDF on desktop, tablet or mobile.</p>
             </div>
-
           </div>
-
         </section>
-
       </main>
-
       <Footer />
     </>
   );
@@ -582,40 +717,18 @@ function Home() {
 ========================================================= */
 
 function ToolCard({ tool }) {
-
   const Icon = tool.icon;
-
   return (
-    <Link
-      className="toolCard"
-      to={`/tool/${tool.id}`}
-    >
-
+    <Link className="toolCard" to={`/tool/${tool.id}`}>
       <div className="iconBox">
         <Icon size={24} />
       </div>
-
       <div className="toolText">
-
-        <h3>
-          {tool.name}
-        </h3>
-
-        <p>
-          {tool.desc}
-        </p>
-
-        <span>
-          {tool.cat}
-        </span>
-
+        <h3>{tool.name}</h3>
+        <p>{tool.desc}</p>
+        <span>{tool.cat}</span>
       </div>
-
-      <ChevronRight
-        className="arrow"
-        size={20}
-      />
-
+      <ChevronRight className="arrow" size={20} />
     </Link>
   );
 }
@@ -625,86 +738,39 @@ function ToolCard({ tool }) {
 ========================================================= */
 
 function Footer() {
-
   return (
     <footer>
-
       <div className="container footerGrid">
-
         <div>
-
           <Link to="/" className="brand">
-
-            <span className="brandMark">
-              D
-            </span>
-
+            <span className="brandMark">D</span>
             <span>
               Desi<span>PDF</span>
             </span>
-
           </Link>
-
-          <p>
-            Your simple, modern PDF toolkit.
-          </p>
-
+          <p>Your simple, modern PDF toolkit.</p>
         </div>
 
         <div>
-
-          <h4>
-            Tools
-          </h4>
-
-          <Link to="/tools">
-            All PDF Tools
-          </Link>
-
-          <Link to="/tool/merge-pdf">
-            Merge PDF
-          </Link>
-
-          <Link to="/tool/compress-pdf">
-            Compress PDF
-          </Link>
-
-          <Link to="/tool/pdf-to-powerpoint">
-            PDF to PowerPoint
-          </Link>
-
-          <Link to="/tool/pdf-to-excel">
-            PDF to Excel
-          </Link>
-
-          <Link to="/tool/protect-pdf">
-            Protect PDF
-          </Link>
-
+          <h4>Tools</h4>
+          <Link to="/tools">All PDF Tools</Link>
+          <Link to="/tool/merge-pdf">Merge PDF</Link>
+          <Link to="/tool/compress-pdf">Compress PDF</Link>
+          <Link to="/tool/pdf-to-powerpoint">PDF to PowerPoint</Link>
+          <Link to="/tool/pdf-to-excel">PDF to Excel</Link>
+          <Link to="/tool/protect-pdf">Protect PDF</Link>
         </div>
 
         <div>
-
-          <h4>
-            Company
-          </h4>
-
-          <a href="/#about">
-            About
-          </a>
-
-          <a href="/#how">
-            How it works
-          </a>
-
+          <h4>Company</h4>
+          <a href="/#about">About</a>
+          <a href="/#how">How it works</a>
         </div>
-
       </div>
 
       <div className="container copyright">
         © 2026 DesiPDF. Built for the web.
       </div>
-
     </footer>
   );
 }
@@ -713,83 +779,40 @@ function Footer() {
    FILE DROP
 ========================================================= */
 
-function FileDrop({
-  multiple = false,
-  accept = ".pdf",
-  onFiles,
-}) {
-
-  const [drag, setDrag] =
-    useState(false);
+function FileDrop({ multiple = false, accept = ".pdf", onFiles }) {
+  const [drag, setDrag] = useState(false);
 
   return (
     <div
       className={`drop ${drag ? "drag" : ""}`}
-
       onDragOver={(e) => {
         e.preventDefault();
         setDrag(true);
       }}
-
-      onDragLeave={() => {
-        setDrag(false);
-      }}
-
+      onDragLeave={() => setDrag(false)}
       onDrop={(e) => {
-
         e.preventDefault();
         setDrag(false);
-
-        const selected =
-          [...e.dataTransfer.files];
-
-        onFiles(
-          multiple
-            ? selected
-            : selected.slice(0, 1)
-        );
-
+        const selected = [...e.dataTransfer.files];
+        onFiles(multiple ? selected : selected.slice(0, 1));
       }}
     >
-
       <Upload size={38} />
-
-      <h3>
-        Drop your file
-        {multiple ? "s" : ""}
-        {" "}here
-      </h3>
-
-      <p>
-        or click to browse
-      </p>
+      <h3>Drop your file{multiple ? "s" : ""} here</h3>
+      <p>or click to browse</p>
 
       <label className="browse">
-
-        Choose file
-        {multiple ? "s" : ""}
-
+        Choose file{multiple ? "s" : ""}
         <input
           type="file"
           multiple={multiple}
           accept={accept}
-
           onChange={(e) => {
-
-            const selected =
-              [...e.target.files];
-
-            onFiles(
-              multiple
-                ? selected
-                : selected.slice(0, 1)
-            );
-
+            const selected = [...e.target.files];
+            onFiles(multiple ? selected : selected.slice(0, 1));
           }}
         />
-
       </label>
-
     </div>
   );
 }
@@ -799,58 +822,41 @@ function FileDrop({
 ========================================================= */
 
 function fileData(file) {
-
-  return new Promise(
-    (resolve, reject) => {
-
-      const reader =
-        new FileReader();
-
-      reader.onload =
-        () => resolve(
-          reader.result
-        );
-
-      reader.onerror =
-        reject;
-
-      reader.readAsDataURL(file);
-
-    }
-  );
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 }
 
 function download(blob, name) {
-
-  const url =
-    URL.createObjectURL(blob);
-
-  const a =
-    document.createElement("a");
-
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
   a.href = url;
   a.download = name;
-
   document.body.appendChild(a);
-
   a.click();
-
   a.remove();
-
-  setTimeout(() => {
-    URL.revokeObjectURL(url);
-  }, 1500);
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
 }
 
 function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
-  return new Promise(
-    (resolve) =>
-      setTimeout(
-        resolve,
-        ms
-      )
-  );
+function parsePageNumbers(value) {
+  if (!value.trim()) {
+    throw new Error("Please enter page numbers.");
+  }
+
+  const pages = value.split(",").map((item) => Number(item.trim()));
+
+  if (pages.some((page) => !Number.isInteger(page) || page < 1)) {
+    throw new Error("Page numbers must be positive numbers.");
+  }
+
+  return pages;
 }
 
 /* =========================================================
@@ -858,40 +864,19 @@ function sleep(ms) {
 ========================================================= */
 
 async function mergePDF(files) {
-
   if (files.length < 2) {
-    throw new Error(
-      "Please select at least two PDF files."
-    );
+    throw new Error("Please select at least two PDF files.");
   }
 
-  const output =
-    await PDFDocument.create();
+  const output = await PDFDocument.create();
 
   for (const file of files) {
-
-    const source =
-      await PDFDocument.load(
-        await file.arrayBuffer()
-      );
-
-    const pages =
-      await output.copyPages(
-        source,
-        source.getPageIndices()
-      );
-
-    pages.forEach((page) => {
-      output.addPage(page);
-    });
+    const source = await PDFDocument.load(await file.arrayBuffer());
+    const pages = await output.copyPages(source, source.getPageIndices());
+    pages.forEach((page) => output.addPage(page));
   }
 
-  return new Blob(
-    [await output.save()],
-    {
-      type: "application/pdf",
-    }
-  );
+  return new Blob([await output.save()], { type: "application/pdf" });
 }
 
 /* =========================================================
@@ -899,39 +884,17 @@ async function mergePDF(files) {
 ========================================================= */
 
 async function splitPDF(file) {
-
-  const source =
-    await PDFDocument.load(
-      await file.arrayBuffer()
-    );
-
+  const source = await PDFDocument.load(await file.arrayBuffer());
   const result = [];
 
-  for (
-    let i = 0;
-    i < source.getPageCount();
-    i++
-  ) {
-
-    const output =
-      await PDFDocument.create();
-
-    const [page] =
-      await output.copyPages(
-        source,
-        [i]
-      );
-
+  for (let i = 0; i < source.getPageCount(); i++) {
+    const output = await PDFDocument.create();
+    const [page] = await output.copyPages(source, [i]);
     output.addPage(page);
 
     result.push({
       name: `page-${i + 1}.pdf`,
-      blob: new Blob(
-        [await output.save()],
-        {
-          type: "application/pdf",
-        }
-      ),
+      blob: new Blob([await output.save()], { type: "application/pdf" }),
     });
   }
 
@@ -943,24 +906,9 @@ async function splitPDF(file) {
 ========================================================= */
 
 async function compressPDF(file) {
-
-  const pdf =
-    await PDFDocument.load(
-      await file.arrayBuffer()
-    );
-
-  const bytes =
-    await pdf.save({
-      useObjectStreams: true,
-      addDefaultPage: false,
-    });
-
-  return new Blob(
-    [bytes],
-    {
-      type: "application/pdf",
-    }
-  );
+  const pdf = await PDFDocument.load(await file.arrayBuffer());
+  const bytes = await pdf.save({ useObjectStreams: true, addDefaultPage: false });
+  return new Blob([bytes], { type: "application/pdf" });
 }
 
 /* =========================================================
@@ -968,68 +916,29 @@ async function compressPDF(file) {
 ========================================================= */
 
 async function imageToPDF(files) {
+  const pdf = new jsPDF({ unit: "pt", format: "a4" });
 
-  const pdf =
-    new jsPDF({
-      unit: "pt",
-      format: "a4",
+  for (let i = 0; i < files.length; i++) {
+    if (i > 0) pdf.addPage();
+
+    const data = await fileData(files[i]);
+    const img = new window.Image();
+
+    await new Promise((resolve, reject) => {
+      img.onload = resolve;
+      img.onerror = reject;
+      img.src = data;
     });
-
-  for (
-    let i = 0;
-    i < files.length;
-    i++
-  ) {
-
-    if (i > 0) {
-      pdf.addPage();
-    }
-
-    const data =
-      await fileData(files[i]);
-
-    const img =
-      new window.Image();
-
-    await new Promise(
-      (resolve, reject) => {
-
-        img.onload = resolve;
-        img.onerror = reject;
-
-        img.src = data;
-      }
-    );
 
     const pageWidth = 595;
     const pageHeight = 842;
     const margin = 35;
+    const maxWidth = pageWidth - margin * 2;
+    const maxHeight = pageHeight - margin * 2;
+    const ratio = Math.min(maxWidth / img.width, maxHeight / img.height);
+    const imageType = files[i].type === "image/png" ? "PNG" : "JPEG";
 
-    const maxWidth =
-      pageWidth - margin * 2;
-
-    const maxHeight =
-      pageHeight - margin * 2;
-
-    const ratio =
-      Math.min(
-        maxWidth / img.width,
-        maxHeight / img.height
-      );
-
-    const imageType =
-      files[i].type === "image/png"
-        ? "PNG"
-        : "JPEG";
-
-    pdf.addImage(
-      data,
-      imageType,
-      margin,
-      margin,
-      img.width * ratio,
-      img.height * ratio
-    );
+    pdf.addImage(data, imageType, margin, margin, img.width * ratio, img.height * ratio);
   }
 
   return pdf.output("blob");
@@ -1040,68 +949,21 @@ async function imageToPDF(files) {
 ========================================================= */
 
 async function pdfToJPG(file) {
-
-  const pdf =
-    await pdfjsLib
-      .getDocument({
-        data:
-          await file.arrayBuffer(),
-      })
-      .promise;
-
+  const pdf = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
   const result = [];
 
-  for (
-    let pageNo = 1;
-    pageNo <= pdf.numPages;
-    pageNo++
-  ) {
+  for (let pageNo = 1; pageNo <= pdf.numPages; pageNo++) {
+    const page = await pdf.getPage(pageNo);
+    const viewport = page.getViewport({ scale: 2 });
+    const canvas = document.createElement("canvas");
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
 
-    const page =
-      await pdf.getPage(pageNo);
+    const context = canvas.getContext("2d");
+    await page.render({ canvasContext: context, viewport }).promise;
 
-    const viewport =
-      page.getViewport({
-        scale: 2,
-      });
-
-    const canvas =
-      document.createElement(
-        "canvas"
-      );
-
-    canvas.width =
-      viewport.width;
-
-    canvas.height =
-      viewport.height;
-
-    const context =
-      canvas.getContext("2d");
-
-    await page.render({
-      canvasContext: context,
-      viewport,
-    }).promise;
-
-    const blob =
-      await new Promise(
-        (resolve) => {
-
-          canvas.toBlob(
-            resolve,
-            "image/jpeg",
-            0.92
-          );
-
-        }
-      );
-
-    result.push({
-      name:
-        `page-${pageNo}.jpg`,
-      blob,
-    });
+    const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.92));
+    result.push({ name: `page-${pageNo}.jpg`, blob });
   }
 
   return result;
@@ -1112,151 +974,65 @@ async function pdfToJPG(file) {
 ========================================================= */
 
 async function pdfToWord(file) {
-
-  const pdf =
-    await pdfjsLib
-      .getDocument({
-        data: await file.arrayBuffer(),
-      })
-      .promise;
-
+  const pdf = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
   const paragraphs = [];
 
-  for (
-    let pageNo = 1;
-    pageNo <= pdf.numPages;
-    pageNo++
-  ) {
+  for (let pageNo = 1; pageNo <= pdf.numPages; pageNo++) {
+    const page = await pdf.getPage(pageNo);
+    const textContent = await page.getTextContent();
 
-    const page =
-      await pdf.getPage(pageNo);
-
-    const textContent =
-      await page.getTextContent();
-
-    const items =
-      textContent.items
-        .filter(
-          (item) =>
-            typeof item.str === "string" &&
-            item.str.trim()
-        )
-        .map((item) => ({
-          text: item.str.trim(),
-          x: item.transform?.[4] ?? 0,
-          y: item.transform?.[5] ?? 0,
-        }))
-        .sort((a, b) => {
-
-          const yDiff =
-            Math.abs(
-              b.y - a.y
-            );
-
-          return yDiff > 3
-            ? b.y - a.y
-            : a.x - b.x;
-        });
+    const items = textContent.items
+      .filter((item) => typeof item.str === "string" && item.str.trim())
+      .map((item) => ({
+        text: item.str.trim(),
+        x: item.transform?.[4] ?? 0,
+        y: item.transform?.[5] ?? 0,
+      }))
+      .sort((a, b) => {
+        const yDiff = Math.abs(b.y - a.y);
+        return yDiff > 3 ? b.y - a.y : a.x - b.x;
+      });
 
     const lines = [];
-
     for (const item of items) {
-
-      let line =
-        lines.find(
-          (candidate) =>
-            Math.abs(
-              candidate.y - item.y
-            ) <= 3
-        );
-
+      let line = lines.find((candidate) => Math.abs(candidate.y - item.y) <= 3);
       if (!line) {
-
-        line = {
-          y: item.y,
-          items: [],
-        };
-
+        line = { y: item.y, items: [] };
         lines.push(line);
       }
-
       line.items.push(item);
     }
 
-    lines.sort(
-      (a, b) =>
-        b.y - a.y
-    );
+    lines.sort((a, b) => b.y - a.y);
 
     if (pageNo > 1) {
-
       paragraphs.push(
-        new Paragraph({
-          children: [
-            new TextRun({
-              text: "",
-            }),
-          ],
-          pageBreakBefore: true,
-        })
+        new Paragraph({ children: [new TextRun({ text: "" })], pageBreakBefore: true })
       );
     }
 
     for (const line of lines) {
-
-      line.items.sort(
-        (a, b) =>
-          a.x - b.x
-      );
-
-      const text =
-        line.items
-          .map(
-            (item) =>
-              item.text
-          )
-          .join(" ")
-          .replace(/\s+/g, " ")
-          .trim();
+      line.items.sort((a, b) => a.x - b.x);
+      const text = line.items
+        .map((item) => item.text)
+        .join(" ")
+        .replace(/\s+/g, " ")
+        .trim();
 
       if (text) {
-
         paragraphs.push(
-          new Paragraph({
-            children: [
-              new TextRun({
-                text,
-              }),
-            ],
-            spacing: {
-              after: 120,
-            },
-          })
+          new Paragraph({ children: [new TextRun({ text })], spacing: { after: 120 } })
         );
       }
     }
   }
 
   if (!paragraphs.length) {
-
-    throw new Error(
-      "No selectable text was found. This may be a scanned PDF."
-    );
+    throw new Error("No selectable text was found. This may be a scanned PDF.");
   }
 
-  const document =
-    new Document({
-      sections: [
-        {
-          properties: {},
-          children: paragraphs,
-        },
-      ],
-    });
-
-  return Packer.toBlob(
-    document
-  );
+  const doc = new Document({ sections: [{ properties: {}, children: paragraphs }] });
+  return Packer.toBlob(doc);
 }
 
 /* =========================================================
@@ -1264,108 +1040,51 @@ async function pdfToWord(file) {
 ========================================================= */
 
 async function wordToPDF(file) {
-
-  const zip =
-    await JSZip.loadAsync(
-      await file.arrayBuffer()
-    );
-
-  const documentXml =
-    zip.file(
-      "word/document.xml"
-    );
+  const zip = await JSZip.loadAsync(await file.arrayBuffer());
+  const documentXml = zip.file("word/document.xml");
 
   if (!documentXml) {
-
-    throw new Error(
-      "Invalid Word document."
-    );
+    throw new Error("Invalid Word document.");
   }
 
-  const xml =
-    await documentXml.async(
-      "text"
-    );
+  const xml = await documentXml.async("text");
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(xml, "application/xml");
+  const paragraphs = [...doc.getElementsByTagName("w:p")];
 
-  const parser =
-    new DOMParser();
-
-  const doc =
-    parser.parseFromString(
-      xml,
-      "application/xml"
-    );
-
-  const paragraphs =
-    [...doc.getElementsByTagName("w:p")];
-
-  const pdf =
-    new jsPDF({
-      unit: "pt",
-      format: "a4",
-    });
-
+  const pdf = new jsPDF({ unit: "pt", format: "a4" });
   const margin = 45;
   const pageWidth = 595;
   const pageHeight = 842;
-
   let y = 55;
 
   for (const paragraph of paragraphs) {
-
-    const textNodes =
-      [...paragraph.getElementsByTagName("w:t")];
-
-    const text =
-      textNodes
-        .map(
-          (node) =>
-            node.textContent || ""
-        )
-        .join("")
-        .trim();
+    const textNodes = [...paragraph.getElementsByTagName("w:t")];
+    const text = textNodes.map((node) => node.textContent || "").join("").trim();
 
     if (!text) {
       y += 12;
       continue;
     }
 
-    const lines =
-      pdf.splitTextToSize(
-        text,
-        pageWidth - margin * 2
-      );
+    const lines = pdf.splitTextToSize(text, pageWidth - margin * 2);
 
     for (const line of lines) {
-
       if (y > pageHeight - 55) {
-
         pdf.addPage();
         y = 55;
       }
 
-      pdf.setFont(
-        "helvetica",
-        "normal"
-      );
-
+      pdf.setFont("helvetica", "normal");
       pdf.setFontSize(11);
-
-      pdf.text(
-        line,
-        margin,
-        y
-      );
-
+      pdf.text(line, margin, y);
       y += 16;
     }
 
     y += 8;
   }
 
-  return pdf.output(
-    "blob"
-  );
+  return pdf.output("blob");
 }
 
 /* =========================================================
@@ -1373,117 +1092,40 @@ async function wordToPDF(file) {
 ========================================================= */
 
 async function pdfToPowerPoint(file) {
+  const pdf = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
+  const pptx = new PptxGenJS();
 
-  const pdf =
-    await pdfjsLib
-      .getDocument({
-        data: await file.arrayBuffer(),
-      })
-      .promise;
+  pptx.layout = "LAYOUT_WIDE";
+  pptx.author = "DesiPDF";
+  pptx.subject = "PDF converted to PowerPoint";
+  pptx.title = "DesiPDF Presentation";
 
-  const pptx =
-    new PptxGenJS();
+  for (let pageNo = 1; pageNo <= pdf.numPages; pageNo++) {
+    const page = await pdf.getPage(pageNo);
+    const viewport = page.getViewport({ scale: 2 });
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.ceil(viewport.width);
+    canvas.height = Math.ceil(viewport.height);
 
-  pptx.layout =
-    "LAYOUT_WIDE";
+    const context = canvas.getContext("2d");
+    await page.render({ canvasContext: context, viewport }).promise;
 
-  pptx.author =
-    "DesiPDF";
+    const imageData = canvas.toDataURL("image/jpeg", 0.92);
+    const slide = pptx.addSlide();
+    slide.background = { color: "FFFFFF" };
 
-  pptx.subject =
-    "PDF converted to PowerPoint";
+    const slideWidth = 13.333;
+    const slideHeight = 7.5;
+    const scale = Math.min(slideWidth / viewport.width, slideHeight / viewport.height);
+    const imageWidth = viewport.width * scale;
+    const imageHeight = viewport.height * scale;
+    const x = (slideWidth - imageWidth) / 2;
+    const y = (slideHeight - imageHeight) / 2;
 
-  pptx.title =
-    "DesiPDF Presentation";
-
-  for (
-    let pageNo = 1;
-    pageNo <= pdf.numPages;
-    pageNo++
-  ) {
-
-    const page =
-      await pdf.getPage(pageNo);
-
-    const viewport =
-      page.getViewport({
-        scale: 2,
-      });
-
-    const canvas =
-      document.createElement(
-        "canvas"
-      );
-
-    canvas.width =
-      Math.ceil(viewport.width);
-
-    canvas.height =
-      Math.ceil(viewport.height);
-
-    const context =
-      canvas.getContext("2d");
-
-    await page.render({
-      canvasContext: context,
-      viewport,
-    }).promise;
-
-    const imageData =
-      canvas.toDataURL(
-        "image/jpeg",
-        0.92
-      );
-
-    const slide =
-      pptx.addSlide();
-
-    slide.background = {
-      color: "FFFFFF",
-    };
-
-    const slideWidth =
-      13.333;
-
-    const slideHeight =
-      7.5;
-
-    const pdfWidth =
-      viewport.width;
-
-    const pdfHeight =
-      viewport.height;
-
-    const scale =
-      Math.min(
-        slideWidth / pdfWidth,
-        slideHeight / pdfHeight
-      );
-
-    const imageWidth =
-      pdfWidth * scale;
-
-    const imageHeight =
-      pdfHeight * scale;
-
-    const x =
-      (slideWidth - imageWidth) / 2;
-
-    const y =
-      (slideHeight - imageHeight) / 2;
-
-    slide.addImage({
-      data: imageData,
-      x,
-      y,
-      w: imageWidth,
-      h: imageHeight,
-    });
+    slide.addImage({ data: imageData, x, y, w: imageWidth, h: imageHeight });
   }
 
-  return pptx.write({
-    outputType: "blob",
-  });
+  return pptx.write({ outputType: "blob" });
 }
 
 /* =========================================================
@@ -1491,117 +1133,41 @@ async function pdfToPowerPoint(file) {
 ========================================================= */
 
 async function powerPointToPDF(file) {
+  const zip = await JSZip.loadAsync(await file.arrayBuffer());
 
-  const zip =
-    await JSZip.loadAsync(
-      await file.arrayBuffer()
-    );
-
-  const slideFiles =
-    Object.keys(zip.files)
-      .filter(
-        (name) =>
-          /^ppt\/slides\/slide\d+\.xml$/.test(
-            name
-          )
-      )
-      .sort((a, b) => {
-
-        const na =
-          Number(
-            a.match(/slide(\d+)\.xml/)?.[1] || 0
-          );
-
-        const nb =
-          Number(
-            b.match(/slide(\d+)\.xml/)?.[1] || 0
-          );
-
-        return na - nb;
-      });
-
-  if (!slideFiles.length) {
-
-    throw new Error(
-      "No PowerPoint slides were found."
-    );
-  }
-
-  const pdf =
-    new jsPDF({
-      unit: "pt",
-      format: "a4",
-      orientation: "landscape",
+  const slideFiles = Object.keys(zip.files)
+    .filter((name) => /^ppt\/slides\/slide\d+\.xml$/.test(name))
+    .sort((a, b) => {
+      const na = Number(a.match(/slide(\d+)\.xml/)?.[1] || 0);
+      const nb = Number(b.match(/slide(\d+)\.xml/)?.[1] || 0);
+      return na - nb;
     });
 
-  for (
-    let i = 0;
-    i < slideFiles.length;
-    i++
-  ) {
-
-    if (i > 0) {
-      pdf.addPage();
-    }
-
-    const xml =
-      await zip.files[
-        slideFiles[i]
-      ].async("text");
-
-    const parser =
-      new DOMParser();
-
-    const doc =
-      parser.parseFromString(
-        xml,
-        "application/xml"
-      );
-
-    const textNodes =
-      [...doc.getElementsByTagName("a:t")];
-
-    const text =
-      textNodes
-        .map(
-          (node) =>
-            node.textContent || ""
-        )
-        .join(" ")
-        .replace(/\s+/g, " ")
-        .trim();
-
-    pdf.setFont(
-      "helvetica",
-      "normal"
-    );
-
-    pdf.setFontSize(18);
-
-    pdf.text(
-      `Slide ${i + 1}`,
-      40,
-      45
-    );
-
-    pdf.setFontSize(12);
-
-    const lines =
-      pdf.splitTextToSize(
-        text || "PowerPoint slide",
-        690
-      );
-
-    pdf.text(
-      lines,
-      40,
-      80
-    );
+  if (!slideFiles.length) {
+    throw new Error("No PowerPoint slides were found.");
   }
 
-  return pdf.output(
-    "blob"
-  );
+  const pdf = new jsPDF({ unit: "pt", format: "a4", orientation: "landscape" });
+
+  for (let i = 0; i < slideFiles.length; i++) {
+    if (i > 0) pdf.addPage();
+
+    const xml = await zip.files[slideFiles[i]].async("text");
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(xml, "application/xml");
+    const textNodes = [...doc.getElementsByTagName("a:t")];
+    const text = textNodes.map((node) => node.textContent || "").join(" ").replace(/\s+/g, " ").trim();
+
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(18);
+    pdf.text(`Slide ${i + 1}`, 40, 45);
+
+    pdf.setFontSize(12);
+    const lines = pdf.splitTextToSize(text || "PowerPoint slide", 690);
+    pdf.text(lines, 40, 80);
+  }
+
+  return pdf.output("blob");
 }
 
 /* =========================================================
@@ -1609,144 +1175,51 @@ async function powerPointToPDF(file) {
 ========================================================= */
 
 async function excelToPDF(file) {
+  const workbook = XLSX.read(await file.arrayBuffer(), { type: "array" });
+  const pdf = new jsPDF({ unit: "pt", format: "a4", orientation: "landscape" });
 
-  const workbook =
-    XLSX.read(
-      await file.arrayBuffer(),
-      {
-        type: "array",
-      }
-    );
+  const pageWidth = 842;
+  const pageHeight = 595;
+  const margin = 30;
 
-  const pdf =
-    new jsPDF({
-      unit: "pt",
-      format: "a4",
-      orientation: "landscape",
-    });
+  workbook.SheetNames.forEach((sheetName, sheetIndex) => {
+    if (sheetIndex > 0) pdf.addPage();
 
-  const pageWidth =
-    842;
+    const sheet = workbook.Sheets[sheetName];
+    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false });
 
-  const pageHeight =
-    595;
+    pdf.setFontSize(16);
+    pdf.text(sheetName, margin, 30);
 
-  const margin =
-    30;
+    let y = 55;
+    const maxCols = Math.min(10, Math.max(1, ...rows.map((row) => row.length)));
+    const tableWidth = pageWidth - margin * 2;
+    const colWidth = tableWidth / maxCols;
 
-  workbook.SheetNames.forEach(
-    (sheetName, sheetIndex) => {
-
-      if (sheetIndex > 0) {
+    for (let r = 0; r < rows.length; r++) {
+      if (y > pageHeight - 30) {
         pdf.addPage();
+        y = 35;
       }
 
-      const sheet =
-        workbook.Sheets[
-          sheetName
-        ];
+      const row = rows[r] || [];
 
-      const rows =
-        XLSX.utils.sheet_to_json(
-          sheet,
-          {
-            header: 1,
-            raw: false,
-          }
-        );
+      for (let c = 0; c < maxCols; c++) {
+        const value = row[c] == null ? "" : String(row[c]);
+        const x = margin + c * colWidth;
 
-      pdf.setFontSize(16);
+        pdf.setFontSize(r === 0 ? 8 : 7);
+        pdf.rect(x, y, colWidth, 18);
 
-      pdf.text(
-        sheetName,
-        margin,
-        30
-      );
-
-      let y = 55;
-
-      const maxCols =
-        Math.min(
-          10,
-          Math.max(
-            1,
-            ...rows.map(
-              (row) =>
-                row.length
-            )
-          )
-        );
-
-      const tableWidth =
-        pageWidth - margin * 2;
-
-      const colWidth =
-        tableWidth / maxCols;
-
-      for (
-        let r = 0;
-        r < rows.length;
-        r++
-      ) {
-
-        if (
-          y >
-          pageHeight - 30
-        ) {
-
-          pdf.addPage();
-          y = 35;
-        }
-
-        const row =
-          rows[r] || [];
-
-        for (
-          let c = 0;
-          c < maxCols;
-          c++
-        ) {
-
-          const value =
-            row[c] == null
-              ? ""
-              : String(row[c]);
-
-          const x =
-            margin +
-            c * colWidth;
-
-          pdf.setFontSize(
-            r === 0 ? 8 : 7
-          );
-
-          pdf.rect(
-            x,
-            y,
-            colWidth,
-            18
-          );
-
-          const shortText =
-            value.length > 28
-              ? value.slice(0, 25) + "..."
-              : value;
-
-          pdf.text(
-            shortText,
-            x + 3,
-            y + 12
-          );
-        }
-
-        y += 18;
+        const shortText = value.length > 28 ? value.slice(0, 25) + "..." : value;
+        pdf.text(shortText, x + 3, y + 12);
       }
+
+      y += 18;
     }
-  );
+  });
 
-  return pdf.output(
-    "blob"
-  );
+  return pdf.output("blob");
 }
 
 /* =========================================================
@@ -1754,136 +1227,52 @@ async function excelToPDF(file) {
 ========================================================= */
 
 async function pdfToExcel(file) {
-
-  const pdf =
-    await pdfjsLib
-      .getDocument({
-        data:
-          await file.arrayBuffer(),
-      })
-      .promise;
-
+  const pdf = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
   const rows = [];
 
-  for (
-    let pageNo = 1;
-    pageNo <= pdf.numPages;
-    pageNo++
-  ) {
+  for (let pageNo = 1; pageNo <= pdf.numPages; pageNo++) {
+    const page = await pdf.getPage(pageNo);
+    const content = await page.getTextContent();
 
-    const page =
-      await pdf.getPage(
-        pageNo
-      );
-
-    const content =
-      await page.getTextContent();
-
-    const items =
-      content.items
-        .filter(
-          (item) =>
-            typeof item.str === "string" &&
-            item.str.trim()
-        )
-        .map((item) => ({
-          text:
-            item.str.trim(),
-          x:
-            item.transform?.[4] ?? 0,
-          y:
-            item.transform?.[5] ?? 0,
-        }));
+    const items = content.items
+      .filter((item) => typeof item.str === "string" && item.str.trim())
+      .map((item) => ({
+        text: item.str.trim(),
+        x: item.transform?.[4] ?? 0,
+        y: item.transform?.[5] ?? 0,
+      }));
 
     items.sort((a, b) => {
-
-      const yDiff =
-        Math.abs(
-          b.y - a.y
-        );
-
-      if (yDiff > 4) {
-        return b.y - a.y;
-      }
-
-      return a.x - b.x;
+      const yDiff = Math.abs(b.y - a.y);
+      return yDiff > 4 ? b.y - a.y : a.x - b.x;
     });
 
     let currentY = null;
     let currentRow = [];
 
     for (const item of items) {
-
-      if (
-        currentY === null ||
-        Math.abs(
-          currentY - item.y
-        ) <= 4
-      ) {
-
-        currentRow.push(
-          item.text
-        );
-
-        if (
-          currentY === null
-        ) {
-          currentY = item.y;
-        }
-
+      if (currentY === null || Math.abs(currentY - item.y) <= 4) {
+        currentRow.push(item.text);
+        if (currentY === null) currentY = item.y;
       } else {
-
-        rows.push(
-          currentRow
-        );
-
-        currentRow = [
-          item.text,
-        ];
-
+        rows.push(currentRow);
+        currentRow = [item.text];
         currentY = item.y;
       }
     }
 
-    if (currentRow.length) {
-      rows.push(
-        currentRow
-      );
-    }
-
+    if (currentRow.length) rows.push(currentRow);
     rows.push([]);
   }
 
-  const worksheet =
-    XLSX.utils.aoa_to_sheet(
-      rows
-    );
+  const worksheet = XLSX.utils.aoa_to_sheet(rows);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "PDF Data");
 
-  const workbook =
-    XLSX.utils.book_new();
-
-  XLSX.utils.book_append_sheet(
-    workbook,
-    worksheet,
-    "PDF Data"
-  );
-
-  const arrayBuffer =
-    XLSX.write(
-      workbook,
-      {
-        bookType: "xlsx",
-        type: "array",
-      }
-    );
-
-  return new Blob(
-    [arrayBuffer],
-    {
-      type:
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    }
-  );
+  const arrayBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+  return new Blob([arrayBuffer], {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  });
 }
 
 /* =========================================================
@@ -1891,263 +1280,100 @@ async function pdfToExcel(file) {
 ========================================================= */
 
 async function htmlToPDF(file) {
+  const html = await file.text();
+  const container = document.createElement("div");
 
-  const html =
-    await file.text();
+  Object.assign(container.style, {
+    position: "fixed",
+    left: "-100000px",
+    top: "0",
+    width: "794px",
+    background: "#ffffff",
+    padding: "30px",
+  });
 
-  const container =
-    document.createElement(
-      "div"
-    );
-
-  container.style.position =
-    "fixed";
-
-  container.style.left =
-    "-100000px";
-
-  container.style.top =
-    "0";
-
-  container.style.width =
-    "794px";
-
-  container.style.background =
-    "#ffffff";
-
-  container.style.padding =
-    "30px";
-
-  container.innerHTML =
-    html;
-
-  document.body.appendChild(
-    container
-  );
+  container.innerHTML = html;
+  document.body.appendChild(container);
 
   try {
+    const canvas = await html2canvas(container, {
+      scale: 1.5,
+      useCORS: true,
+      backgroundColor: "#ffffff",
+    });
 
-    const canvas =
-      await html2canvas(
-        container,
-        {
-          scale: 1.5,
-          useCORS: true,
-          backgroundColor:
-            "#ffffff",
-        }
-      );
+    const imgData = canvas.toDataURL("image/jpeg", 0.92);
+    const pdf = new jsPDF({ unit: "pt", format: "a4" });
 
-    const imgData =
-      canvas.toDataURL(
-        "image/jpeg",
-        0.92
-      );
+    const pageWidth = 595;
+    const pageHeight = 842;
+    const ratio = pageWidth / canvas.width;
+    const imgWidth = pageWidth;
+    const imgHeight = canvas.height * ratio;
 
-    const pdf =
-      new jsPDF({
-        unit: "pt",
-        format: "a4",
-      });
+    let heightLeft = imgHeight;
+    let position = 0;
 
-    const pageWidth =
-      595;
+    pdf.addImage(imgData, "JPEG", 0, position, imgWidth, imgHeight);
+    heightLeft -= pageHeight;
 
-    const pageHeight =
-      842;
-
-    const ratio =
-      pageWidth /
-      canvas.width;
-
-    const imgWidth =
-      pageWidth;
-
-    const imgHeight =
-      canvas.height * ratio;
-
-    let heightLeft =
-      imgHeight;
-
-    let position =
-      0;
-
-    pdf.addImage(
-      imgData,
-      "JPEG",
-      0,
-      position,
-      imgWidth,
-      imgHeight
-    );
-
-    heightLeft -=
-      pageHeight;
-
-    while (
-      heightLeft > 0
-    ) {
-
-      position -=
-        pageHeight;
-
+    while (heightLeft > 0) {
+      position -= pageHeight;
       pdf.addPage();
-
-      pdf.addImage(
-        imgData,
-        "JPEG",
-        0,
-        position,
-        imgWidth,
-        imgHeight
-      );
-
-      heightLeft -=
-        pageHeight;
+      pdf.addImage(imgData, "JPEG", 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
     }
 
-    return pdf.output(
-      "blob"
-    );
-
+    return pdf.output("blob");
   } finally {
-
     container.remove();
   }
 }
 
 /* =========================================================
    PDF TO PDF/A
+   Note: browser-only pdf-lib/jsPDF does not guarantee full
+   PDF/A standards compliance. This creates a fresh
+   archival-style PDF copy while preserving page appearance.
 ========================================================= */
 
 async function pdfToPDFA(file) {
+  const pdf = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
+  const output = new jsPDF({ unit: "pt", format: "a4" });
 
-  /*
-    Browser-only pdf-lib does not guarantee full PDF/A
-    standards compliance. This creates a fresh archival-style
-    PDF copy while preserving page appearance.
-  */
+  for (let pageNo = 1; pageNo <= pdf.numPages; pageNo++) {
+    if (pageNo > 1) output.addPage();
 
-  const pdf =
-    await pdfjsLib
-      .getDocument({
-        data:
-          await file.arrayBuffer(),
-      })
-      .promise;
+    const page = await pdf.getPage(pageNo);
+    const viewport = page.getViewport({ scale: 1.5 });
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.ceil(viewport.width);
+    canvas.height = Math.ceil(viewport.height);
 
-  const output =
-    new jsPDF({
-      unit: "pt",
-      format: "a4",
-    });
+    const context = canvas.getContext("2d");
+    await page.render({ canvasContext: context, viewport }).promise;
 
-  for (
-    let pageNo = 1;
-    pageNo <= pdf.numPages;
-    pageNo++
-  ) {
+    const image = canvas.toDataURL("image/jpeg", 0.95);
+    const pageWidth = 595;
+    const pageHeight = 842;
+    const ratio = Math.min(pageWidth / viewport.width, pageHeight / viewport.height);
+    const w = viewport.width * ratio;
+    const h = viewport.height * ratio;
+    const x = (pageWidth - w) / 2;
+    const y = (pageHeight - h) / 2;
 
-    if (pageNo > 1) {
-      output.addPage();
-    }
-
-    const page =
-      await pdf.getPage(
-        pageNo
-      );
-
-    const viewport =
-      page.getViewport({
-        scale: 1.5,
-      });
-
-    const canvas =
-      document.createElement(
-        "canvas"
-      );
-
-    canvas.width =
-      Math.ceil(
-        viewport.width
-      );
-
-    canvas.height =
-      Math.ceil(
-        viewport.height
-      );
-
-    const context =
-      canvas.getContext(
-        "2d"
-      );
-
-    await page.render({
-      canvasContext:
-        context,
-      viewport,
-    }).promise;
-
-    const image =
-      canvas.toDataURL(
-        "image/jpeg",
-        0.95
-      );
-
-    const pageWidth =
-      595;
-
-    const pageHeight =
-      842;
-
-    const ratio =
-      Math.min(
-        pageWidth /
-          viewport.width,
-        pageHeight /
-          viewport.height
-      );
-
-    const w =
-      viewport.width *
-      ratio;
-
-    const h =
-      viewport.height *
-      ratio;
-
-    const x =
-      (pageWidth - w) / 2;
-
-    const y =
-      (pageHeight - h) / 2;
-
-    output.addImage(
-      image,
-      "JPEG",
-      x,
-      y,
-      w,
-      h
-    );
+    output.addImage(image, "JPEG", x, y, w, h);
   }
 
   output.setProperties({
-    title:
-      "DesiPDF PDF/A Archive",
-    subject:
-      "Archived PDF copy",
-    author:
-      "DesiPDF",
-    creator:
-      "DesiPDF",
-    keywords:
-      "PDF/A, archive, DesiPDF",
+    title: "DesiPDF PDF/A Archive",
+    subject: "Archived PDF copy",
+    author: "DesiPDF",
+    creator: "DesiPDF",
+    keywords: "PDF/A, archive, DesiPDF",
   });
 
-  return output.output(
-    "blob"
-  );
+  return output.output("blob");
 }
 
 /* =========================================================
@@ -2155,1303 +1381,331 @@ async function pdfToPDFA(file) {
 ========================================================= */
 
 async function rotatePDF(file) {
+  const pdf = await PDFDocument.load(await file.arrayBuffer());
 
-  const pdf =
-    await PDFDocument.load(
-      await file.arrayBuffer()
-    );
+  pdf.getPages().forEach((page) => {
+    const current = page.getRotation().angle;
+    page.setRotation(degrees((current + 90) % 360));
+  });
 
-  pdf.getPages().forEach(
-    (page) => {
-
-      const current =
-        page.getRotation().angle;
-
-      page.setRotation(
-        degrees(
-          (current + 90) % 360
-        )
-      );
-    }
-  );
-
-  return new Blob(
-    [await pdf.save()],
-    {
-      type: "application/pdf",
-    }
-  );
+  return new Blob([await pdf.save()], { type: "application/pdf" });
 }
 
 /* =========================================================
    REMOVE PAGES
 ========================================================= */
 
-async function removePages(
-  file,
-  pagesToRemove
-) {
+async function removePages(file, pagesToRemove) {
+  const pdf = await PDFDocument.load(await file.arrayBuffer());
+  const total = pdf.getPageCount();
 
-  const pdf =
-    await PDFDocument.load(
-      await file.arrayBuffer()
-    );
+  const pages = [...new Set(pagesToRemove)]
+    .filter((page) => page >= 0 && page < total)
+    .sort((a, b) => b - a);
 
-  const total =
-    pdf.getPageCount();
-
-  const pages =
-    [...new Set(pagesToRemove)]
-      .filter(
-        (page) =>
-          page >= 0 &&
-          page < total
-      )
-      .sort(
-        (a, b) =>
-          b - a
-      );
-
-  if (
-    pages.length >= total
-  ) {
-
-    throw new Error(
-      "You cannot remove every page."
-    );
+  if (pages.length >= total) {
+    throw new Error("You cannot remove every page.");
   }
 
-  pages.forEach(
-    (page) =>
-      pdf.removePage(
-        page
-      )
-  );
+  pages.forEach((page) => pdf.removePage(page));
 
-  return new Blob(
-    [await pdf.save()],
-    {
-      type: "application/pdf",
-    }
-  );
+  return new Blob([await pdf.save()], { type: "application/pdf" });
 }
 
 /* =========================================================
    EXTRACT PAGES
 ========================================================= */
 
-async function extractPages(
-  file,
-  pageNumbers
-) {
+async function extractPages(file, pageNumbers) {
+  const source = await PDFDocument.load(await file.arrayBuffer());
+  const total = source.getPageCount();
 
-  const source =
-    await PDFDocument.load(
-      await file.arrayBuffer()
-    );
-
-  const total =
-    source.getPageCount();
-
-  const indexes =
-    [...new Set(pageNumbers)]
-      .filter(
-        (page) =>
-          page >= 0 &&
-          page < total
-      );
+  const indexes = [...new Set(pageNumbers)].filter((page) => page >= 0 && page < total);
 
   if (!indexes.length) {
-
-    throw new Error(
-      "Please enter valid page numbers."
-    );
+    throw new Error("Please enter valid page numbers.");
   }
 
-  const output =
-    await PDFDocument.create();
+  const output = await PDFDocument.create();
+  const pages = await output.copyPages(source, indexes);
+  pages.forEach((page) => output.addPage(page));
 
-  const pages =
-    await output.copyPages(
-      source,
-      indexes
-    );
-
-  pages.forEach(
-    (page) =>
-      output.addPage(page)
-  );
-
-  return new Blob(
-    [await output.save()],
-    {
-      type: "application/pdf",
-    }
-  );
+  return new Blob([await output.save()], { type: "application/pdf" });
 }
 
 /* =========================================================
    REORDER PAGES
 ========================================================= */
 
-async function reorderPages(
-  file,
-  order
-) {
+async function reorderPages(file, order) {
+  const source = await PDFDocument.load(await file.arrayBuffer());
+  const total = source.getPageCount();
 
-  const source =
-    await PDFDocument.load(
-      await file.arrayBuffer()
-    );
-
-  const total =
-    source.getPageCount();
-
-  if (
-    order.length !== total
-  ) {
-
-    throw new Error(
-      `Please enter all ${total} page numbers in the new order.`
-    );
+  if (order.length !== total) {
+    throw new Error(`Please enter all ${total} page numbers in the new order.`);
   }
 
-  const indexes =
-    order.map(
-      (page) =>
-        page - 1
-    );
+  const indexes = order.map((page) => page - 1);
+  const unique = new Set(indexes);
 
-  const unique =
-    new Set(indexes);
-
-  if (
-    unique.size !== total ||
-    indexes.some(
-      (i) =>
-        i < 0 ||
-        i >= total
-    )
-  ) {
-
-    throw new Error(
-      "Every page number must appear exactly once."
-    );
+  if (unique.size !== total || indexes.some((i) => i < 0 || i >= total)) {
+    throw new Error("Every page number must appear exactly once.");
   }
 
-  const output =
-    await PDFDocument.create();
+  const output = await PDFDocument.create();
+  const pages = await output.copyPages(source, indexes);
+  pages.forEach((page) => output.addPage(page));
 
-  const pages =
-    await output.copyPages(
-      source,
-      indexes
-    );
-
-  pages.forEach(
-    (page) =>
-      output.addPage(page)
-  );
-
-  return new Blob(
-    [await output.save()],
-    {
-      type: "application/pdf",
-    }
-  );
+  return new Blob([await output.save()], { type: "application/pdf" });
 }
 
 /* =========================================================
    WATERMARK
 ========================================================= */
 
-async function watermarkPDF(
-  file,
-  text
-) {
+async function watermarkPDF(file, text) {
+  const pdf = await PDFDocument.load(await file.arrayBuffer());
 
-  const pdf =
-    await PDFDocument.load(
-      await file.arrayBuffer()
-    );
+  for (const page of pdf.getPages()) {
+    const { width, height } = page.getSize();
 
-  for (
-    const page of pdf.getPages()
-  ) {
-
-    const {
-      width,
-      height,
-    } = page.getSize();
-
-    page.drawText(
-      text || "DesiPDF",
-      {
-        x:
-          width / 2 - 100,
-
-        y:
-          height / 2,
-
-        size: 34,
-
-        color:
-          rgb(
-            0.5,
-            0.5,
-            0.5
-          ),
-
-        opacity: 0.25,
-
-        rotate:
-          degrees(45),
-      }
-    );
+    page.drawText(text || "DesiPDF", {
+      x: width / 2 - 100,
+      y: height / 2,
+      size: 34,
+      color: rgb(0.5, 0.5, 0.5),
+      opacity: 0.25,
+      rotate: degrees(45),
+    });
   }
 
-  return new Blob(
-    [await pdf.save()],
-    {
-      type: "application/pdf",
-    }
-  );
+  return new Blob([await pdf.save()], { type: "application/pdf" });
 }
 
 /* =========================================================
    PAGE NUMBERS
 ========================================================= */
 
-async function addPageNumbers(
-  file
-) {
+async function addPageNumbers(file) {
+  const pdf = await PDFDocument.load(await file.arrayBuffer());
+  const font = await pdf.embedFont(StandardFonts.Helvetica);
 
-  const pdf =
-    await PDFDocument.load(
-      await file.arrayBuffer()
-    );
+  pdf.getPages().forEach((page, index) => {
+    const { width } = page.getSize();
+    const text = String(index + 1);
 
-  const font =
-    await pdf.embedFont(
-      StandardFonts.Helvetica
-    );
+    page.drawText(text, {
+      x: width / 2 - 5,
+      y: 20,
+      size: 12,
+      font,
+      color: rgb(0.2, 0.2, 0.2),
+    });
+  });
 
-  pdf.getPages().forEach(
-    (page, index) => {
-
-      const {
-        width,
-      } = page.getSize();
-
-      const text =
-        String(
-          index + 1
-        );
-
-      page.drawText(
-        text,
-        {
-          x:
-            width / 2 - 5,
-
-          y: 20,
-
-          size: 12,
-
-          font,
-
-          color:
-            rgb(
-              0.2,
-              0.2,
-              0.2
-            ),
-        }
-      );
-    }
-  );
-
-  return new Blob(
-    [await pdf.save()],
-    {
-      type: "application/pdf",
-    }
-  );
+  return new Blob([await pdf.save()], { type: "application/pdf" });
 }
 
 /* =========================================================
    PROTECT PDF
 ========================================================= */
 
-async function protectPDF(
-  file,
-  password,
-  ownerPassword,
-  options
-) {
-
+async function protectPDF(file, password, ownerPassword, options) {
   if (!password) {
-
-    throw new Error(
-      "Please enter a password."
-    );
+    throw new Error("Please enter a password.");
   }
 
-  const bytes =
-    new Uint8Array(
-      await file.arrayBuffer()
-    );
+  const bytes = new Uint8Array(await file.arrayBuffer());
 
-  const encrypted =
-    await encryptPDF(
-      bytes,
-      password,
-      {
-        ownerPassword:
-          ownerPassword ||
-          password,
+  const encrypted = await encryptPDF(bytes, password, {
+    ownerPassword: ownerPassword || password,
+    algorithm: "AES-256",
+    allowPrinting: options.allowPrinting,
+    allowModifying: options.allowModifying,
+    allowCopying: options.allowCopying,
+    allowAnnotating: options.allowAnnotating,
+    allowFillingForms: true,
+    allowExtraction: options.allowExtraction,
+    allowAssembly: options.allowAssembly,
+    allowHighQualityPrint: options.allowHighQualityPrint,
+  });
 
-        algorithm:
-          "AES-256",
-
-        allowPrinting:
-          options.allowPrinting,
-
-        allowModifying:
-          options.allowModifying,
-
-        allowCopying:
-          options.allowCopying,
-
-        allowAnnotating:
-          options.allowAnnotating,
-
-        allowFillingForms:
-          true,
-
-        allowExtraction:
-          options.allowExtraction,
-
-        allowAssembly:
-          options.allowAssembly,
-
-        allowHighQualityPrint:
-          options.allowHighQualityPrint,
-      }
-    );
-
-  return new Blob(
-    [encrypted],
-    {
-      type: "application/pdf",
-    }
-  );
+  return new Blob([encrypted], { type: "application/pdf" });
 }
 
 /* =========================================================
    UNLOCK PDF
 ========================================================= */
 
-async function unlockPDF(
-  file,
-  password
-) {
-
+async function unlockPDF(file, password) {
   if (!password) {
-
-    throw new Error(
-      "Please enter the PDF password."
-    );
+    throw new Error("Please enter the PDF password.");
   }
 
-  const bytes =
-    new Uint8Array(
-      await file.arrayBuffer()
-    );
-
-  const info =
-    await isEncrypted(
-      bytes
-    );
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const info = await isEncrypted(bytes);
 
   if (!info.encrypted) {
-
-    throw new Error(
-      "This PDF is not encrypted."
-    );
+    throw new Error("This PDF is not encrypted.");
   }
 
-  const decrypted =
-    await decryptPDF(
-      bytes,
-      password
-    );
-
-  return new Blob(
-    [decrypted],
-    {
-      type: "application/pdf",
-    }
-  );
+  const decrypted = await decryptPDF(bytes, password);
+  return new Blob([decrypted], { type: "application/pdf" });
 }
 
 /* =========================================================
    SIGN PDF
 ========================================================= */
 
-async function signPDF(
-  file,
-  signature,
-  pageNumber,
-  xPosition,
-  yPosition
-) {
-
+async function signPDF(file, signature, pageNumber, xPosition, yPosition) {
   if (!signature.trim()) {
-
-    throw new Error(
-      "Please enter your signature."
-    );
+    throw new Error("Please enter your signature.");
   }
 
-  const pdf =
-    await PDFDocument.load(
-      await file.arrayBuffer()
-    );
+  const pdf = await PDFDocument.load(await file.arrayBuffer());
+  const pages = pdf.getPages();
 
-  const pages =
-    pdf.getPages();
-
-  const pageIndex =
-    Math.max(
-      0,
-      Math.min(
-        pages.length - 1,
-        Number(
-          pageNumber || 1
-        ) - 1
-      )
-    );
-
-  const page =
-    pages[pageIndex];
-
-  const font =
-    await pdf.embedFont(
-      StandardFonts.HelveticaOblique
-    );
-
-  const {
-    width,
-    height,
-  } = page.getSize();
-
-  const x =
-    Number.isFinite(
-      Number(xPosition)
-    )
-      ? Number(xPosition)
-      : 60;
-
-  const y =
-    Number.isFinite(
-      Number(yPosition)
-    )
-      ? Number(yPosition)
-      : height - 100;
-
-  page.drawText(
-    signature,
-    {
-      x:
-        Math.max(
-          10,
-          Math.min(
-            width - 200,
-            x
-          )
-        ),
-
-      y:
-        Math.max(
-          10,
-          Math.min(
-            height - 40,
-            y
-          )
-        ),
-
-      size: 28,
-
-      font,
-
-      color:
-        rgb(
-          0.05,
-          0.1,
-          0.5
-        ),
-    }
+  const pageIndex = Math.max(
+    0,
+    Math.min(pages.length - 1, Number(pageNumber || 1) - 1)
   );
 
-  return new Blob(
-    [await pdf.save()],
-    {
-      type: "application/pdf",
-    }
-  );
-}
+  const page = pages[pageIndex];
+  const font = await pdf.embedFont(StandardFonts.HelveticaOblique);
+  const { width, height } = page.getSize();
 
-/* =========================================================
-   PAGE NUMBER PARSER
-========================================================= */
+  const x = Number.isFinite(Number(xPosition)) ? Number(xPosition) : 60;
+  const y = Number.isFinite(Number(yPosition)) ? Number(yPosition) : height - 100;
 
-function parsePageNumbers(
-  value
-) {
+  page.drawText(signature, {
+    x: Math.max(10, Math.min(width - 200, x)),
+    y: Math.max(10, Math.min(height - 40, y)),
+    size: 28,
+    font,
+    color: rgb(0.05, 0.1, 0.5),
+  });
 
-  if (!value.trim()) {
-
-    throw new Error(
-      "Please enter page numbers."
-    );
-  }
-
-  const pages =
-    value
-      .split(",")
-      .map(
-        (item) =>
-          Number(
-            item.trim()
-          )
-      );
-
-  if (
-    pages.some(
-      (page) =>
-        !Number.isInteger(page) ||
-        page < 1
-    )
-  ) {
-
-    throw new Error(
-      "Page numbers must be positive numbers."
-    );
-  }
-
-  return pages;
+  return new Blob([await pdf.save()], { type: "application/pdf" });
 }
 
 /* =========================================================
    TOOL PAGE
 ========================================================= */
-const TOOL_SEO_CONTENT = {
-  "merge-pdf": {
-    heading: "Merge PDF Online",
-    intro: "Merge multiple PDF files into one document online with DesiPDF. Combine your PDF files quickly and easily without installing software.",
-    howTo: [
-      "Upload the PDF files you want to combine.",
-      "Arrange the files in the order you need.",
-      "Click the merge button to combine your PDFs.",
-      "Download your merged PDF."
-    ],
-    faqs: [
-      ["Can I merge multiple PDF files?", "Yes. DesiPDF lets you combine multiple PDF files into one document."],
-      ["Is the Merge PDF tool free?", "Yes. DesiPDF provides the Merge PDF tool free online."],
-      ["Do I need to install software?", "No. You can use the tool directly in your web browser."]
-    ]
-  },
 
-  "split-pdf": {
-    heading: "Split PDF Online",
-    intro: "Split PDF files into separate documents with DesiPDF. Extract the pages you need from a PDF quickly using your browser.",
-    howTo: [
-      "Upload your PDF file.",
-      "Select the pages or page ranges you want to split.",
-      "Start the PDF splitting process.",
-      "Download your separated PDF files."
-    ],
-    faqs: [
-      ["Can I split a PDF by pages?", "Yes. You can select pages or page ranges from your PDF."],
-      ["Is Split PDF free?", "Yes. DesiPDF provides a free online PDF splitting tool."],
-      ["Can I use it on mobile?", "Yes. The tool works in modern desktop and mobile browsers."]
-    ]
-  },
-
-  "compress-pdf": {
-    heading: "Compress PDF Online",
-    intro: "Reduce the file size of your PDF documents with DesiPDF. Compress PDF files online while making them easier to store and share.",
-    howTo: [
-      "Upload your PDF file.",
-      "Start the compression process.",
-      "Wait for your compressed PDF to be generated.",
-      "Download the smaller PDF file."
-    ],
-    faqs: [
-      ["What does PDF compression do?", "PDF compression reduces the file size of a PDF to make it easier to store and share."],
-      ["Is PDF compression free?", "Yes. DesiPDF offers a free online PDF compression tool."],
-      ["Can I compress PDFs from my phone?", "Yes. You can use the tool from a supported mobile browser."]
-    ]
-  },
-
-  "jpg-to-pdf": {
-    heading: "JPG to PDF Converter",
-    intro: "Convert JPG images into PDF documents online with DesiPDF. Create PDF files from your images quickly and easily.",
-    howTo: [
-      "Upload your JPG images.",
-      "Arrange the images if needed.",
-      "Start the conversion.",
-      "Download your PDF document."
-    ],
-    faqs: [
-      ["Can I convert JPG images to PDF?", "Yes. DesiPDF converts JPG images into PDF documents online."],
-      ["Is JPG to PDF free?", "Yes. The JPG to PDF converter is available online for free."],
-      ["Can I convert multiple images?", "The tool can process the supported image files you upload."]
-    ]
-  },
-
-  "pdf-to-jpg": {
-    heading: "PDF to JPG Converter",
-    intro: "Convert PDF pages into JPG images online with DesiPDF. Turn your PDF pages into image files directly in your browser.",
-    howTo: [
-      "Upload your PDF document.",
-      "Start the PDF to JPG conversion.",
-      "Wait for the pages to be converted.",
-      "Download your JPG images."
-    ],
-    faqs: [
-      ["Can I convert PDF pages to JPG?", "Yes. DesiPDF can convert supported PDF pages into JPG images."],
-      ["Is PDF to JPG free?", "Yes. DesiPDF provides a free online PDF to JPG converter."],
-      ["Do I need special software?", "No. You can use the converter directly in your browser."]
-    ]
-  },
-
-  "pdf-to-word": {
-    heading: "PDF to Word Converter",
-    intro: "Convert PDF documents into editable Word files with DesiPDF. Use the online converter directly from your browser.",
-    howTo: [
-      "Upload your PDF file.",
-      "Start the PDF to Word conversion.",
-      "Wait for the conversion to finish.",
-      "Download your Word document."
-    ],
-    faqs: [
-      ["Can I convert PDF to Word online?", "Yes. DesiPDF provides an online PDF to Word conversion tool."],
-      ["Is PDF to Word free?", "Yes. DesiPDF offers the tool online for free."],
-      ["Can I edit the converted Word file?", "The converted file is intended to be used as an editable Word document."]
-    ]
-  },
-
-  "pdf-to-powerpoint": {
-    heading: "PDF to PowerPoint Converter",
-    intro: "Convert PDF documents into PowerPoint presentations online with DesiPDF.",
-    howTo: [
-      "Upload your PDF.",
-      "Start the PDF to PowerPoint conversion.",
-      "Wait for processing to complete.",
-      "Download your PowerPoint presentation."
-    ],
-    faqs: [
-      ["Can I convert PDF to PowerPoint?", "Yes. DesiPDF provides an online PDF to PowerPoint converter."],
-      ["Is the converter free?", "Yes. The tool is available online for free."],
-      ["Do I need PowerPoint installed?", "You can convert the file online without installing PowerPoint on the conversion page."]
-    ]
-  },
-
-  "rotate-pdf": {
-    heading: "Rotate PDF Online",
-    intro: "Rotate PDF pages online with DesiPDF. Correct the orientation of your PDF documents quickly.",
-    howTo: [
-      "Upload your PDF.",
-      "Choose the page rotation you need.",
-      "Apply the rotation.",
-      "Download the rotated PDF."
-    ],
-    faqs: [
-      ["Can I rotate individual PDF pages?", "The available rotation options depend on the tool interface and selected pages."],
-      ["Is Rotate PDF free?", "Yes. DesiPDF provides a free online Rotate PDF tool."],
-      ["Can I rotate a PDF without software?", "Yes. You can use the tool directly in your browser."]
-    ]
-  },
-
-  "watermark-pdf": {
-    heading: "Add Watermark to PDF Online",
-    intro: "Add a watermark to PDF documents online with DesiPDF. Protect and label your PDF files directly in your browser.",
-    howTo: [
-      "Upload your PDF.",
-      "Enter or choose your watermark.",
-      "Apply the watermark to your document.",
-      "Download the watermarked PDF."
-    ],
-    faqs: [
-      ["Can I add a watermark to a PDF?", "Yes. DesiPDF lets you add a watermark to supported PDF documents."],
-      ["Is the Watermark PDF tool free?", "Yes. The tool is available online for free."],
-      ["Can I use text as a watermark?", "The available watermark options depend on the current tool interface."]
-    ]
-  },
-
-  "page-numbers": {
-    heading: "Add Page Numbers to PDF",
-    intro: "Add page numbers to PDF documents online with DesiPDF. Organize your PDF pages quickly without installing software.",
-    howTo: [
-      "Upload your PDF.",
-      "Choose the page numbering options.",
-      "Apply the page numbers.",
-      "Download the updated PDF."
-    ],
-    faqs: [
-      ["Can I add page numbers to a PDF?", "Yes. DesiPDF provides an online page numbering tool."],
-      ["Is it free?", "Yes. the DesiPDF page numbering tool is available online for free."],
-      ["Can I use the tool in a browser?", "Yes. It works directly in supported web browsers."]
-    ]
-  },
-
-  "remove-pages": {
-    heading: "Remove Pages from PDF",
-    intro: "Remove unwanted pages from PDF files online with DesiPDF. Create a cleaner PDF by deleting pages you do not need.",
-    howTo: [
-      "Upload your PDF.",
-      "Select the pages you want to remove.",
-      "Apply the changes.",
-      "Download your updated PDF."
-    ],
-    faqs: [
-      ["Can I delete pages from a PDF?", "Yes. DesiPDF lets you remove unwanted PDF pages."],
-      ["Is Remove Pages free?", "Yes. The tool is available online for free."],
-      ["Can I remove multiple pages?", "You can select the supported pages you want to remove."]
-    ]
-  },
-
-  "extract-pages": {
-    heading: "Extract Pages from PDF",
-    intro: "Extract selected pages from PDF documents online with DesiPDF. Create a new PDF containing only the pages you need.",
-    howTo: [
-      "Upload your PDF.",
-      "Select the pages you want to extract.",
-      "Start the extraction process.",
-      "Download the new PDF."
-    ],
-    faqs: [
-      ["Can I extract specific PDF pages?", "Yes. You can select the pages you need from a supported PDF."],
-      ["Is Extract PDF Pages free?", "Yes. DesiPDF provides the tool online for free."],
-      ["Will the original PDF be changed?", "The extraction process creates a separate output document."]
-    ]
-  },
-
-  "reorder-pages": {
-    heading: "Reorder PDF Pages Online",
-    intro: "Rearrange PDF pages online with DesiPDF. Put your document pages into the order you need.",
-    howTo: [
-      "Upload your PDF.",
-      "Arrange the pages in your preferred order.",
-      "Apply the new page order.",
-      "Download your reordered PDF."
-    ],
-    faqs: [
-      ["Can I change the order of PDF pages?", "Yes. DesiPDF provides an online PDF page reordering tool."],
-      ["Is Reorder PDF free?", "Yes. The tool is available online for free."],
-      ["Do I need to install software?", "No. You can use the tool directly in your browser."]
-    ]
-  },
-
-  "sign-pdf": {
-    heading: "Sign PDF Online",
-    intro: "Sign PDF documents online with DesiPDF. Add your signature to supported PDF files directly in your browser.",
-    howTo: [
-      "Upload your PDF.",
-      "Add your signature using the available options.",
-      "Place the signature where needed.",
-      "Download the signed PDF."
-    ],
-    faqs: [
-      ["Can I sign a PDF online?", "Yes. DesiPDF provides an online PDF signing tool."],
-      ["Is Sign PDF free?", "Yes. The tool is available online for free."],
-      ["Can I use the tool without installing software?", "Yes. You can use it directly in a supported browser."]
-    ]
-  },
-
-  "protect-pdf": {
-    heading: "Protect PDF with Password",
-    intro: "Protect PDF documents online with DesiPDF. Add protection to supported PDF files directly from your browser.",
-    howTo: [
-      "Upload your PDF.",
-      "Enter the required protection settings.",
-      "Apply protection to the PDF.",
-      "Download your protected PDF."
-    ],
-    faqs: [
-      ["Can I protect a PDF online?", "Yes. DesiPDF provides an online PDF protection tool."],
-      ["Is Protect PDF free?", "Yes. The tool is available online for free."],
-      ["Why protect a PDF?", "PDF protection can help restrict access to documents according to the supported security options."]
-    ]
-  },
-
-  "unlock-pdf": {
-    heading: "Unlock PDF Online",
-    intro: "Unlock supported PDF files online with DesiPDF when you have permission to modify or access the document.",
-    howTo: [
-      "Upload the supported PDF.",
-      "Provide the required information if requested.",
-      "Start the unlocking process.",
-      "Download the resulting PDF."
-    ],
-    faqs: [
-      ["Can I unlock a protected PDF?", "DesiPDF can process supported PDFs when the required access is available."],
-      ["Is Unlock PDF free?", "Yes. The tool is available online for free."],
-      ["Should I unlock a PDF I do not own?", "Only unlock or modify documents when you have the necessary permission."]
-    ]
-  }
-};
 function ToolPage() {
+  const { id } = useParams();
 
-  const { id } =
-    useParams();
-    const seoContent = TOOL_SEO_CONTENT[id];
-    const toolSEO = {
-  "merge-pdf": {
-    title: "Merge PDF Online Free — DesiPDF",
-    description:
-      "Merge multiple PDF files into one document online for free with DesiPDF. Fast, simple and easy PDF merging tool.",
-  },
-  "split-pdf": {
-    title: "Split PDF Online Free — DesiPDF",
-    description:
-      "Split PDF files into separate pages or documents online for free with DesiPDF.",
-  },
-  "compress-pdf": {
-    title: "Compress PDF Online Free — DesiPDF",
-    description:
-      "Compress PDF files online for free with DesiPDF. Reduce PDF file size while keeping your documents easy to use.",
-  },
-  "jpg-to-pdf": {
-    title: "JPG to PDF Converter Online Free — DesiPDF",
-    description:
-      "Convert JPG and image files to PDF online for free with DesiPDF.",
-  },
-  "pdf-to-jpg": {
-    title: "PDF to JPG Converter Online Free — DesiPDF",
-    description:
-      "Convert PDF pages to JPG images online for free with DesiPDF.",
-  },
-  "pdf-to-word": {
-    title: "PDF to Word Converter Online Free — DesiPDF",
-    description:
-      "Convert PDF files to editable Word documents online with DesiPDF.",
-  },
-  "pdf-to-powerpoint": {
-    title: "PDF to PowerPoint Converter Online Free — DesiPDF",
-    description:
-      "Convert PDF files to PowerPoint presentations online with DesiPDF.",
-  },
-  "rotate-pdf": {
-    title: "Rotate PDF Online Free — DesiPDF",
-    description:
-      "Rotate PDF pages online for free with DesiPDF. Easily change the orientation of your PDF pages.",
-  },
-  "watermark-pdf": {
-    title: "Watermark PDF Online Free — DesiPDF",
-    description:
-      "Add a watermark to PDF files online for free with DesiPDF.",
-  },
-  "page-numbers": {
-    title: "Add Page Numbers to PDF Online — DesiPDF",
-    description:
-      "Add page numbers to PDF files online for free with DesiPDF.",
-  },
-  "remove-pages": {
-    title: "Remove Pages from PDF Online — DesiPDF",
-    description:
-      "Remove unwanted pages from PDF files online for free with DesiPDF.",
-  },
-  "extract-pages": {
-    title: "Extract Pages from PDF Online — DesiPDF",
-    description:
-      "Extract selected pages from PDF files online for free with DesiPDF.",
-  },
-  "reorder-pages": {
-    title: "Reorder PDF Pages Online — DesiPDF",
-    description:
-      "Reorder and organize PDF pages online for free with DesiPDF.",
-  },
-  "sign-pdf": {
-    title: "Sign PDF Online Free — DesiPDF",
-    description:
-      "Sign PDF documents online for free with DesiPDF.",
-  },
-  "protect-pdf": {
-    title: "Protect PDF Online Free — DesiPDF",
-    description:
-      "Protect PDF files with a password online using DesiPDF.",
-  },
-  "unlock-pdf": {
-    title: "Unlock PDF Online Free — DesiPDF",
-    description:
-      "Unlock PDF files online with DesiPDF when you have permission to access the document.",
-  }
-};
-const toolContent = {
-  "merge-pdf": {
-    heading: "Merge PDF Files Online Free",
-    text: "Combine multiple PDF files into one document quickly and easily with DesiPDF. Upload your PDF files, arrange them in the order you want, and merge them into a single PDF.",
-    related: ["split-pdf", "compress-pdf", "pdf-to-jpg"]
-  },
+  const tool = tools.find((item) => item.id === id) || tools[0];
+  const content = TOOL_CONTENT[id] || DEFAULT_TOOL_CONTENT;
 
-  "split-pdf": {
-    heading: "Split PDF Online Free",
-    text: "Split a PDF into separate pages or smaller PDF documents with DesiPDF. Easily extract the pages you need from your PDF file.",
-    related: ["merge-pdf", "extract-pages", "remove-pages"]
-  },
+  const [files, setFiles] = useState([]);
+  const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState(false);
+  const [msg, setMsg] = useState("");
+  const [pageInput, setPageInput] = useState("");
+  const [watermark, setWatermark] = useState("DesiPDF");
+  const [password, setPassword] = useState("");
+  const [ownerPassword, setOwnerPassword] = useState("");
+  const [signature, setSignature] = useState("");
+  const [signaturePage, setSignaturePage] = useState("1");
+  const [signatureX, setSignatureX] = useState("60");
+  const [signatureY, setSignatureY] = useState("700");
 
-  "compress-pdf": {
-    heading: "Compress PDF Online Free",
-    text: "Reduce the size of your PDF files with DesiPDF. Compress large PDF documents to make them easier to store, share and upload.",
-    related: ["merge-pdf", "split-pdf", "pdf-to-jpg"]
-  },
+  const [permissions, setPermissions] = useState({
+    allowPrinting: true,
+    allowModifying: false,
+    allowCopying: false,
+    allowAnnotating: true,
+    allowExtraction: false,
+    allowAssembly: false,
+    allowHighQualityPrint: true,
+  });
 
-  "jpg-to-pdf": {
-    heading: "JPG to PDF Converter Online Free",
-    text: "Convert JPG and image files into PDF documents online with DesiPDF. Create a PDF from your images quickly and easily.",
-    related: ["pdf-to-jpg", "merge-pdf", "compress-pdf"]
-  },
+  /* SEO: title, meta description, canonical link, and JSON-LD schema.
+     All DOM side effects live in this single effect, run only when
+     the tool id (or derived content) changes. */
+  useEffect(() => {
+    document.title = content.title;
 
-  "pdf-to-jpg": {
-    heading: "PDF to JPG Converter Online Free",
-    text: "Convert PDF pages into JPG images online with DesiPDF. Extract pages from your PDF as high-quality images.",
-    related: ["jpg-to-pdf", "compress-pdf", "split-pdf"]
-  },
+    let descriptionTag = document.querySelector('meta[name="description"]');
+    if (!descriptionTag) {
+      descriptionTag = document.createElement("meta");
+      descriptionTag.setAttribute("name", "description");
+      document.head.appendChild(descriptionTag);
+    }
+    descriptionTag.setAttribute("content", content.description);
 
-  "pdf-to-word": {
-    heading: "PDF to Word Converter Online Free",
-    text: "Convert PDF documents into editable Word files with DesiPDF. Quickly transform your PDF documents for editing and reuse.",
-    related: ["pdf-to-powerpoint", "compress-pdf", "merge-pdf"]
-  },
+    let canonicalTag = document.querySelector('link[rel="canonical"]');
+    if (!canonicalTag) {
+      canonicalTag = document.createElement("link");
+      canonicalTag.setAttribute("rel", "canonical");
+      document.head.appendChild(canonicalTag);
+    }
+    const canonicalUrl = `${SITE_URL}/tool/${id}`;
+    canonicalTag.setAttribute("href", canonicalUrl);
 
-  "pdf-to-powerpoint": {
-    heading: "PDF to PowerPoint Converter Online Free",
-    text: "Convert PDF documents into PowerPoint presentations with DesiPDF and make your documents easier to present and edit.",
-    related: ["pdf-to-word", "compress-pdf", "merge-pdf"]
-  },
+    const schemaId = "desipdf-tool-schema";
+    let schema = document.getElementById(schemaId);
+    if (!schema) {
+      schema = document.createElement("script");
+      schema.id = schemaId;
+      schema.type = "application/ld+json";
+      document.head.appendChild(schema);
+    }
 
-  "rotate-pdf": {
-    heading: "Rotate PDF Pages Online Free",
-    text: "Rotate PDF pages online with DesiPDF. Correct the orientation of individual pages and create an organized PDF document.",
-    related: ["merge-pdf", "split-pdf", "compress-pdf"]
-  },
+    const graph = [
+      {
+        "@type": "SoftwareApplication",
+        name: `${content.heading} — DesiPDF`,
+        url: canonicalUrl,
+        description: content.description,
+        applicationCategory: "UtilitiesApplication",
+        operatingSystem: "Web Browser",
+        browserRequirements: "Requires JavaScript and a modern web browser.",
+        offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+        publisher: { "@type": "Organization", name: "DesiPDF", url: SITE_URL },
+      },
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "Home", item: `${SITE_URL}/` },
+          { "@type": "ListItem", position: 2, name: "All PDF Tools", item: `${SITE_URL}/tools` },
+          { "@type": "ListItem", position: 3, name: content.heading, item: canonicalUrl },
+        ],
+      },
+    ];
 
-  "watermark-pdf": {
-    heading: "Add Watermark to PDF Online Free",
-    text: "Add a watermark to your PDF documents with DesiPDF. Protect and identify your documents by adding customized watermark text.",
-    related: ["protect-pdf", "sign-pdf", "merge-pdf"]
-  },
-
-  "page-numbers": {
-    heading: "Add Page Numbers to PDF Online",
-    text: "Add page numbers to your PDF documents with DesiPDF. Organize long PDF files and make them easier to navigate.",
-    related: ["reorder-pages", "merge-pdf", "split-pdf"]
-  },
-
-  "remove-pages": {
-    heading: "Remove Pages from PDF Online Free",
-    text: "Remove unwanted pages from PDF files with DesiPDF. Select the pages you no longer need and create a cleaner PDF.",
-    related: ["extract-pages", "split-pdf", "reorder-pages"]
-  },
-
-  "extract-pages": {
-    heading: "Extract Pages from PDF Online Free",
-    text: "Extract selected pages from PDF documents with DesiPDF. Create a new PDF containing only the pages you need.",
-    related: ["remove-pages", "split-pdf", "merge-pdf"]
-  },
-
-  "reorder-pages": {
-    heading: "Reorder PDF Pages Online Free",
-    text: "Rearrange PDF pages online with DesiPDF. Organize your document in the correct order before downloading your PDF.",
-    related: ["merge-pdf", "remove-pages", "extract-pages"]
-  },
-
-  "sign-pdf": {
-    heading: "Sign PDF Online Free",
-    text: "Sign PDF documents online with DesiPDF. Add your signature to documents without needing additional PDF software.",
-    related: ["watermark-pdf", "protect-pdf", "merge-pdf"]
-  },
-
-  "protect-pdf": {
-    heading: "Protect PDF with Password Online",
-    text: "Protect PDF documents with DesiPDF. Add password protection to help keep your PDF files secure.",
-    related: ["unlock-pdf", "sign-pdf", "watermark-pdf"]
-  },
-
-  "unlock-pdf": {
-    heading: "Unlock PDF Online Free",
-    text: "Unlock PDF files with DesiPDF when you have permission to access the document. Remove supported PDF restrictions and work with your file more easily.",
-    related: ["protect-pdf", "merge-pdf", "compress-pdf"]
-  }
-};
-
-const content = toolContent[id] || {
-  heading: "Free Online PDF Tool",
-  text: "Use DesiPDF to work with PDF files online.",
-  related: ["merge-pdf", "split-pdf", "compress-pdf"]
-};
-
-const seo = toolSEO[id] || {
-  title: "Free Online PDF Tool — DesiPDF",
-  description:
-    "Use free online PDF tools with DesiPDF to manage, convert and edit PDF files."
-};
-
-document.title = seo.title;
-
-const canonicalUrl = `https://desipdf.online/tool/${id}`;
-
-let canonical = document.querySelector('link[rel="canonical"]');
-
-if (!canonical) {
-  canonical = document.createElement("link");
-  canonical.rel = "canonical";
-  document.head.appendChild(canonical);
-}
-
-canonical.href = canonicalUrl;
-
-let metaDescription = document.querySelector(
-  'meta[name="description"]'
-);
-
-if (!metaDescription) {
-  metaDescription = document.createElement("meta");
-  metaDescription.name = "description";
-  document.head.appendChild(metaDescription);
-}
-
-metaDescription.content = seo.description;
-
-    useEffect(() => {
-      const schemaId = "desipdf-tool-schema";
-      let schema = document.getElementById(schemaId);
-
-      if (!schema) {
-        schema = document.createElement("script");
-        schema.id = schemaId;
-        schema.type = "application/ld+json";
-        document.head.appendChild(schema);
-      }
-
-      const breadcrumbName = content.heading;
-
-      schema.textContent = JSON.stringify({
-        "@context": "https://schema.org",
-        "@graph": [
-          {
-            "@type": "SoftwareApplication",
-            "name": `${breadcrumbName} — DesiPDF`,
-            "url": `https://desipdf.online/tool/${id}`,
-            "description": seo.description,
-            "applicationCategory": "UtilitiesApplication",
-            "operatingSystem": "Web Browser",
-            "browserRequirements": "Requires JavaScript and a modern web browser.",
-            "offers": {
-              "@type": "Offer",
-              "price": "0",
-              "priceCurrency": "USD"
-            },
-            "publisher": {
-              "@type": "Organization",
-              "name": "DesiPDF",
-              "url": "https://desipdf.online/"
-            }
-          },
-          {
-            "@type": "BreadcrumbList",
-            "itemListElement": [
-              {
-                "@type": "ListItem",
-                "position": 1,
-                "name": "Home",
-                "item": "https://desipdf.online/"
-              },
-              {
-                "@type": "ListItem",
-                "position": 2,
-                "name": "All PDF Tools",
-                "item": "https://desipdf.online/tools"
-              },
-              {
-                "@type": "ListItem",
-                "position": 3,
-                "name": breadcrumbName,
-                "item": `https://desipdf.online/tool/${id}`
-              }
-            ]
-          }
-        ]
+    if (content.faqs?.length) {
+      graph.push({
+        "@type": "FAQPage",
+        mainEntity: content.faqs.map(([question, answer]) => ({
+          "@type": "Question",
+          name: question,
+          acceptedAnswer: { "@type": "Answer", text: answer },
+        })),
       });
-    }, [id, seo.description, content.heading]);
+    }
 
-    useEffect(() => {
-  const seo = seoData[id];
+    schema.textContent = JSON.stringify({ "@context": "https://schema.org", "@graph": graph });
+  }, [id, content]);
 
-  if (!seo) return;
-
-  document.title = seo.title;
-
-  let descriptionTag = document.querySelector(
-    'meta[name="description"]'
-  );
-
-  if (!descriptionTag) {
-    descriptionTag = document.createElement("meta");
-    descriptionTag.setAttribute("name", "description");
-    document.head.appendChild(descriptionTag);
-  }
-
-  descriptionTag.setAttribute(
-    "content",
-    seo.description
-  );
-
-  let canonicalTag = document.querySelector(
-    'link[rel="canonical"]'
-  );
-
-  if (!canonicalTag) {
-    canonicalTag = document.createElement("link");
-    canonicalTag.setAttribute("rel", "canonical");
-    document.head.appendChild(canonicalTag);
-  }
-
-  canonicalTag.setAttribute(
-    "href",
-    `https://desipdf.online/tool/${id}`
-  );
-}, [id]);
-
-  const tool =
-    tools.find(
-      (item) =>
-        item.id === id
-    ) || tools[0];
-
-  const [files, setFiles] =
-    useState([]);
-
-  const [busy, setBusy] =
-    useState(false);
-
-  const [done, setDone] =
-    useState(false);
-
-  const [msg, setMsg] =
-    useState("");
-
-  const [pageInput, setPageInput] =
-    useState("");
-
-  const [watermark, setWatermark] =
-    useState("DesiPDF");
-
-  const [password, setPassword] =
-    useState("");
-
-  const [ownerPassword, setOwnerPassword] =
-    useState("");
-
-  const [signature, setSignature] =
-    useState("");
-
-  const [signaturePage, setSignaturePage] =
-    useState("1");
-
-  const [signatureX, setSignatureX] =
-    useState("60");
-
-  const [signatureY, setSignatureY] =
-    useState("700");
-
-  const [permissions, setPermissions] =
-    useState({
-      allowPrinting: true,
-      allowModifying: false,
-      allowCopying: false,
-      allowAnnotating: true,
-      allowExtraction: false,
-      allowAssembly: false,
-      allowHighQualityPrint: true,
-    });
-
-  /* =======================================================
-     MULTIPLE FILE SETTINGS
-  ======================================================= */
-
-  const isMultiple =
-    id === "merge-pdf" ||
-    id === "jpg-to-pdf";
-
-  /* =======================================================
-     ACCEPT FILE TYPES
-  ======================================================= */
+  const isMultiple = id === "merge-pdf" || id === "jpg-to-pdf";
 
   let accept = ".pdf";
-
-  if (
-    id === "jpg-to-pdf"
-  ) {
-    accept =
-      "image/jpeg,image/png,.jpg,.jpeg,.png";
-  }
-
-  if (
-    id === "word-to-pdf"
-  ) {
-    accept =
-      ".docx";
-  }
-
-  if (
-    id === "powerpoint-to-pdf"
-  ) {
-    accept =
-      ".pptx";
-  }
-
-  if (
-    id === "excel-to-pdf"
-  ) {
-    accept =
-      ".xlsx,.xls,.csv";
-  }
-
-  if (
-    id === "html-to-pdf"
-  ) {
-    accept =
-      ".html,.htm";
-  }
-
-  /* =======================================================
-     RUN
-  ======================================================= */
+  if (id === "jpg-to-pdf") accept = "image/jpeg,image/png,.jpg,.jpeg,.png";
+  if (id === "word-to-pdf") accept = ".docx";
+  if (id === "powerpoint-to-pdf") accept = ".pptx";
+  if (id === "excel-to-pdf") accept = ".xlsx,.xls,.csv";
+  if (id === "html-to-pdf") accept = ".html,.htm";
 
   async function run() {
-
     if (!files.length) {
-
-      setMsg(
-        "Please select a file first."
-      );
-
+      setMsg("Please select a file first.");
       return;
     }
 
-    if (
-      id === "merge-pdf" &&
-      files.length < 2
-    ) {
-
-      setMsg(
-        "Merge PDF needs at least two PDF files."
-      );
-
+    if (id === "merge-pdf" && files.length < 2) {
+      setMsg("Merge PDF needs at least two PDF files.");
       return;
     }
 
@@ -3460,449 +1714,90 @@ metaDescription.content = seo.description;
     setMsg("");
 
     try {
-
       let blob;
 
-      /* MERGE */
-
-      if (
-        id === "merge-pdf"
-      ) {
-
-        blob =
-          await mergePDF(
-            files
-          );
-
-        download(
-          blob,
-          "merged.pdf"
-        );
-      }
-
-      /* SPLIT */
-
-      else if (
-        id === "split-pdf"
-      ) {
-
-        const pages =
-          await splitPDF(
-            files[0]
-          );
-
-        for (
-          const page of pages
-        ) {
-
-          download(
-            page.blob,
-            page.name
-          );
-
-          await sleep(
-            250
-          );
+      if (id === "merge-pdf") {
+        blob = await mergePDF(files);
+        download(blob, "merged.pdf");
+      } else if (id === "split-pdf") {
+        const pages = await splitPDF(files[0]);
+        for (const page of pages) {
+          download(page.blob, page.name);
+          await sleep(250);
         }
-      }
-
-      /* COMPRESS */
-
-      else if (
-        id === "compress-pdf"
-      ) {
-
-        blob =
-          await compressPDF(
-            files[0]
-          );
-
-        download(
-          blob,
-          "compressed.pdf"
-        );
-      }
-
-      /* JPG TO PDF */
-
-      else if (
-        id === "jpg-to-pdf"
-      ) {
-
-        blob =
-          await imageToPDF(
-            files
-          );
-
-        download(
-          blob,
-          "images.pdf"
-        );
-      }
-
-      /* PDF TO JPG */
-
-      else if (
-        id === "pdf-to-jpg"
-      ) {
-
-        const images =
-          await pdfToJPG(
-            files[0]
-          );
-
-        for (
-          const image of images
-        ) {
-
-          download(
-            image.blob,
-            image.name
-          );
-
-          await sleep(
-            250
-          );
+      } else if (id === "compress-pdf") {
+        blob = await compressPDF(files[0]);
+        download(blob, "compressed.pdf");
+      } else if (id === "jpg-to-pdf") {
+        blob = await imageToPDF(files);
+        download(blob, "images.pdf");
+      } else if (id === "pdf-to-jpg") {
+        const images = await pdfToJPG(files[0]);
+        for (const image of images) {
+          download(image.blob, image.name);
+          await sleep(250);
         }
-      }
-
-      /* WORD TO PDF */
-
-      else if (
-        id === "word-to-pdf"
-      ) {
-
-        blob =
-          await wordToPDF(
-            files[0]
-          );
-
-        download(
-          blob,
-          "converted.pdf"
-        );
-      }
-
-      /* PDF TO WORD */
-
-      else if (
-        id === "pdf-to-word"
-      ) {
-
-        blob =
-          await pdfToWord(
-            files[0]
-          );
-
-        download(
-          blob,
-          "converted.docx"
-        );
-      }
-
-      /* POWERPOINT TO PDF */
-
-      else if (
-        id === "powerpoint-to-pdf"
-      ) {
-
-        blob =
-          await powerPointToPDF(
-            files[0]
-          );
-
-        download(
-          blob,
-          "converted.pdf"
-        );
-      }
-
-      /* PDF TO POWERPOINT */
-
-      else if (
-        id === "pdf-to-powerpoint"
-      ) {
-
-        blob =
-          await pdfToPowerPoint(
-            files[0]
-          );
-
-        download(
-          blob,
-          "converted.pptx"
-        );
-      }
-
-      /* EXCEL TO PDF */
-
-      else if (
-        id === "excel-to-pdf"
-      ) {
-
-        blob =
-          await excelToPDF(
-            files[0]
-          );
-
-        download(
-          blob,
-          "converted.pdf"
-        );
-      }
-
-      /* PDF TO EXCEL */
-
-      else if (
-        id === "pdf-to-excel"
-      ) {
-
-        blob =
-          await pdfToExcel(
-            files[0]
-          );
-
-        download(
-          blob,
-          "converted.xlsx"
-        );
-      }
-
-      /* HTML TO PDF */
-
-      else if (
-        id === "html-to-pdf"
-      ) {
-
-        blob =
-          await htmlToPDF(
-            files[0]
-          );
-
-        download(
-          blob,
-          "converted.pdf"
-        );
-      }
-
-      /* PDF TO PDF/A */
-
-      else if (
-        id === "pdf-to-pdfa"
-      ) {
-
-        blob =
-          await pdfToPDFA(
-            files[0]
-          );
-
-        download(
-          blob,
-          "archived-pdfa.pdf"
-        );
-      }
-
-      /* ROTATE */
-
-      else if (
-        id === "rotate-pdf"
-      ) {
-
-        blob =
-          await rotatePDF(
-            files[0]
-          );
-
-        download(
-          blob,
-          "rotated.pdf"
-        );
-      }
-
-      /* REMOVE */
-
-      else if (
-        id === "remove-pages"
-      ) {
-
-        const pages =
-          parsePageNumbers(
-            pageInput
-          );
-
-        blob =
-          await removePages(
-            files[0],
-            pages.map(
-              (x) =>
-                x - 1
-            )
-          );
-
-        download(
-          blob,
-          "pages-removed.pdf"
-        );
-      }
-
-      /* EXTRACT */
-
-      else if (
-        id === "extract-pages"
-      ) {
-
-        const pages =
-          parsePageNumbers(
-            pageInput
-          );
-
-        blob =
-          await extractPages(
-            files[0],
-            pages.map(
-              (x) =>
-                x - 1
-            )
-          );
-
-        download(
-          blob,
-          "extracted-pages.pdf"
-        );
-      }
-
-      /* REORDER */
-
-      else if (
-        id === "reorder-pages"
-      ) {
-
-        const pages =
-          parsePageNumbers(
-            pageInput
-          );
-
-        blob =
-          await reorderPages(
-            files[0],
-            pages
-          );
-
-        download(
-          blob,
-          "reordered.pdf"
-        );
-      }
-
-      /* WATERMARK */
-
-      else if (
-        id === "watermark-pdf"
-      ) {
-
-        blob =
-          await watermarkPDF(
-            files[0],
-            watermark
-          );
-
-        download(
-          blob,
-          "watermarked.pdf"
-        );
-      }
-
-      /* PAGE NUMBERS */
-
-      else if (
-        id === "page-numbers"
-      ) {
-
-        blob =
-          await addPageNumbers(
-            files[0]
-          );
-
-        download(
-          blob,
-          "numbered.pdf"
-        );
-      }
-
-      /* PROTECT */
-
-      else if (
-        id === "protect-pdf"
-      ) {
-
-        blob =
-          await protectPDF(
-            files[0],
-            password,
-            ownerPassword,
-            permissions
-          );
-
-        download(
-          blob,
-          "protected.pdf"
-        );
-      }
-
-      /* UNLOCK */
-
-      else if (
-        id === "unlock-pdf"
-      ) {
-
-        blob =
-          await unlockPDF(
-            files[0],
-            password
-          );
-
-        download(
-          blob,
-          "unlocked.pdf"
-        );
-      }
-
-      /* SIGN */
-
-      else if (
-        id === "sign-pdf"
-      ) {
-
-        blob =
-          await signPDF(
-            files[0],
-            signature,
-            signaturePage,
-            signatureX,
-            signatureY
-          );
-
-        download(
-          blob,
-          "signed.pdf"
-        );
+      } else if (id === "word-to-pdf") {
+        blob = await wordToPDF(files[0]);
+        download(blob, "converted.pdf");
+      } else if (id === "pdf-to-word") {
+        blob = await pdfToWord(files[0]);
+        download(blob, "converted.docx");
+      } else if (id === "powerpoint-to-pdf") {
+        blob = await powerPointToPDF(files[0]);
+        download(blob, "converted.pdf");
+      } else if (id === "pdf-to-powerpoint") {
+        blob = await pdfToPowerPoint(files[0]);
+        download(blob, "converted.pptx");
+      } else if (id === "excel-to-pdf") {
+        blob = await excelToPDF(files[0]);
+        download(blob, "converted.pdf");
+      } else if (id === "pdf-to-excel") {
+        blob = await pdfToExcel(files[0]);
+        download(blob, "converted.xlsx");
+      } else if (id === "html-to-pdf") {
+        blob = await htmlToPDF(files[0]);
+        download(blob, "converted.pdf");
+      } else if (id === "pdf-to-pdfa") {
+        blob = await pdfToPDFA(files[0]);
+        download(blob, "archived-pdfa.pdf");
+      } else if (id === "rotate-pdf") {
+        blob = await rotatePDF(files[0]);
+        download(blob, "rotated.pdf");
+      } else if (id === "remove-pages") {
+        const pages = parsePageNumbers(pageInput);
+        blob = await removePages(files[0], pages.map((x) => x - 1));
+        download(blob, "pages-removed.pdf");
+      } else if (id === "extract-pages") {
+        const pages = parsePageNumbers(pageInput);
+        blob = await extractPages(files[0], pages.map((x) => x - 1));
+        download(blob, "extracted-pages.pdf");
+      } else if (id === "reorder-pages") {
+        const pages = parsePageNumbers(pageInput);
+        blob = await reorderPages(files[0], pages);
+        download(blob, "reordered.pdf");
+      } else if (id === "watermark-pdf") {
+        blob = await watermarkPDF(files[0], watermark);
+        download(blob, "watermarked.pdf");
+      } else if (id === "page-numbers") {
+        blob = await addPageNumbers(files[0]);
+        download(blob, "numbered.pdf");
+      } else if (id === "protect-pdf") {
+        blob = await protectPDF(files[0], password, ownerPassword, permissions);
+        download(blob, "protected.pdf");
+      } else if (id === "unlock-pdf") {
+        blob = await unlockPDF(files[0], password);
+        download(blob, "unlocked.pdf");
+      } else if (id === "sign-pdf") {
+        blob = await signPDF(files[0], signature, signaturePage, signatureX, signatureY);
+        download(blob, "signed.pdf");
       }
 
       setDone(true);
-
     } catch (error) {
-
-      console.error(
-        error
-      );
-
-      setMsg(
-        error?.message ||
-        "Something went wrong while processing the file."
-      );
-
+      console.error(error);
+      setMsg(error?.message || "Something went wrong while processing the file.");
     } finally {
-
       setBusy(false);
     }
   }
@@ -3910,437 +1805,223 @@ metaDescription.content = seo.description;
   return (
     <>
       <Header />
-
       <main className="toolPage">
-
         <div className="container">
-
-          <Link
-            to="/"
-            className="back"
-          >
-            ← All tools
-          </Link>
+          <Link to="/" className="back">← All tools</Link>
 
           <div className="toolHero">
-
             <div className="bigIcon">
-              {React.createElement(
-                tool.icon,
-                {
-                  size: 30,
-                }
-              )}
+              {React.createElement(tool.icon, { size: 30 })}
             </div>
-
-            <span className="eyebrow">
-              {tool.cat}
-            </span>
-
-            <h1>
-              {tool.name}
-            </h1>
-
-            <p>
-              {tool.desc}
-            </p>
-
+            <span className="eyebrow">{tool.cat}</span>
+            <h1>{tool.name}</h1>
+            <p>{tool.desc}</p>
           </div>
 
           <div className="workspace">
-
-            <FileDrop
-              multiple={isMultiple}
-              accept={accept}
-              onFiles={setFiles}
-            />
-
-            {/* FILE LIST */}
+            <FileDrop multiple={isMultiple} accept={accept} onFiles={setFiles} />
 
             {files.length > 0 && (
-
               <div className="fileList">
-
-                {files.map(
-                  (file, index) => (
-
-                    <div
-                      className="file"
-                      key={`${file.name}-${index}`}
-                    >
-
-                      <FileText size={19} />
-
-                      <span>
-                        {file.name}
-                      </span>
-
-                      <small>
-                        {(
-                          file.size /
-                          1024 /
-                          1024
-                        ).toFixed(2)}
-                        {" "}MB
-                      </small>
-
-                    </div>
-
-                  )
-                )}
-
+                {files.map((file, index) => (
+                  <div className="file" key={`${file.name}-${index}`}>
+                    <FileText size={19} />
+                    <span>{file.name}</span>
+                    <small>{(file.size / 1024 / 1024).toFixed(2)} MB</small>
+                  </div>
+                ))}
               </div>
-
             )}
 
-            {/* PAGE INPUT */}
-
-            {[
-              "remove-pages",
-              "extract-pages",
-              "reorder-pages",
-            ].includes(id) &&
+            {["remove-pages", "extract-pages", "reorder-pages"].includes(id) &&
               files.length > 0 && (
-
                 <div className="removeBox">
-
                   <p>
                     {id === "reorder-pages"
                       ? "Enter the complete new page order. Example: 3,1,2,4"
                       : "Enter page numbers separated by commas. Example: 2,4,6"}
                   </p>
-
                   <input
                     value={pageInput}
-                    onChange={(e) =>
-                      setPageInput(
-                        e.target.value
-                      )
-                    }
-                    placeholder={
-                      id === "reorder-pages"
-                        ? "3,1,2,4"
-                        : "2,4,6"
-                    }
+                    onChange={(e) => setPageInput(e.target.value)}
+                    placeholder={id === "reorder-pages" ? "3,1,2,4" : "2,4,6"}
                   />
-
                 </div>
-
               )}
 
-            {/* WATERMARK */}
+            {id === "watermark-pdf" && files.length > 0 && (
+              <div className="removeBox">
+                <p>Watermark text</p>
+                <input
+                  value={watermark}
+                  onChange={(e) => setWatermark(e.target.value)}
+                  placeholder="DesiPDF"
+                />
+              </div>
+            )}
 
-            {id ===
-              "watermark-pdf" &&
-              files.length > 0 && (
+            {["protect-pdf", "unlock-pdf"].includes(id) && files.length > 0 && (
+              <div className="securityBox">
+                <h3>{id === "protect-pdf" ? "PDF Security" : "PDF Password"}</h3>
 
-                <div className="removeBox">
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder={id === "protect-pdf" ? "Enter password" : "Enter PDF password"}
+                />
 
-                  <p>
-                    Watermark text
-                  </p>
+                {id === "protect-pdf" && (
+                  <>
+                    <input
+                      type="password"
+                      value={ownerPassword}
+                      onChange={(e) => setOwnerPassword(e.target.value)}
+                      placeholder="Owner password (optional)"
+                    />
 
-                  <input
-                    value={watermark}
-                    onChange={(e) =>
-                      setWatermark(
-                        e.target.value
-                      )
-                    }
-                    placeholder="DesiPDF"
-                  />
+                    <div className="permissions">
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked={permissions.allowPrinting}
+                          onChange={(e) =>
+                            setPermissions({ ...permissions, allowPrinting: e.target.checked })
+                          }
+                        />
+                        Allow printing
+                      </label>
 
-                </div>
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked={permissions.allowCopying}
+                          onChange={(e) =>
+                            setPermissions({ ...permissions, allowCopying: e.target.checked })
+                          }
+                        />
+                        Allow copying
+                      </label>
 
-              )}
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked={permissions.allowModifying}
+                          onChange={(e) =>
+                            setPermissions({ ...permissions, allowModifying: e.target.checked })
+                          }
+                        />
+                        Allow modifying
+                      </label>
 
-            {/* PASSWORD */}
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked={permissions.allowAnnotating}
+                          onChange={(e) =>
+                            setPermissions({ ...permissions, allowAnnotating: e.target.checked })
+                          }
+                        />
+                        Allow annotations
+                      </label>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
 
-            {[
-              "protect-pdf",
-              "unlock-pdf",
-            ].includes(id) &&
-              files.length > 0 && (
+            {id === "sign-pdf" && files.length > 0 && (
+              <div className="securityBox">
+                <h3>Add Signature</h3>
 
-                <div className="securityBox">
+                <input
+                  value={signature}
+                  onChange={(e) => setSignature(e.target.value)}
+                  placeholder="Type your signature"
+                />
 
-                  <h3>
-                    {id === "protect-pdf"
-                      ? "PDF Security"
-                      : "PDF Password"}
-                  </h3>
+                <input
+                  type="number"
+                  min="1"
+                  value={signaturePage}
+                  onChange={(e) => setSignaturePage(e.target.value)}
+                  placeholder="Page number"
+                />
 
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) =>
-                      setPassword(
-                        e.target.value
-                      )
-                    }
-                    placeholder={
-                      id === "protect-pdf"
-                        ? "Enter password"
-                        : "Enter PDF password"
-                    }
-                  />
-
-                  {id === "protect-pdf" && (
-
-                    <>
-
-                      <input
-                        type="password"
-                        value={ownerPassword}
-                        onChange={(e) =>
-                          setOwnerPassword(
-                            e.target.value
-                          )
-                        }
-                        placeholder="Owner password (optional)"
-                      />
-
-                      <div className="permissions">
-
-                        <label>
-                          <input
-                            type="checkbox"
-                            checked={
-                              permissions.allowPrinting
-                            }
-                            onChange={(e) =>
-                              setPermissions({
-                                ...permissions,
-                                allowPrinting:
-                                  e.target.checked,
-                              })
-                            }
-                          />
-                          Allow printing
-                        </label>
-
-                        <label>
-                          <input
-                            type="checkbox"
-                            checked={
-                              permissions.allowCopying
-                            }
-                            onChange={(e) =>
-                              setPermissions({
-                                ...permissions,
-                                allowCopying:
-                                  e.target.checked,
-                              })
-                            }
-                          />
-                          Allow copying
-                        </label>
-
-                        <label>
-                          <input
-                            type="checkbox"
-                            checked={
-                              permissions.allowModifying
-                            }
-                            onChange={(e) =>
-                              setPermissions({
-                                ...permissions,
-                                allowModifying:
-                                  e.target.checked,
-                              })
-                            }
-                          />
-                          Allow modifying
-                        </label>
-
-                        <label>
-                          <input
-                            type="checkbox"
-                            checked={
-                              permissions.allowAnnotating
-                            }
-                            onChange={(e) =>
-                              setPermissions({
-                                ...permissions,
-                                allowAnnotating:
-                                  e.target.checked,
-                              })
-                            }
-                          />
-                          Allow annotations
-                        </label>
-
-                      </div>
-
-                    </>
-                  )}
-
-                </div>
-
-              )}
-
-            {/* SIGN */}
-
-            {id ===
-              "sign-pdf" &&
-              files.length > 0 && (
-
-                <div className="securityBox">
-
-                  <h3>
-                    Add Signature
-                  </h3>
-
-                  <input
-                    value={signature}
-                    onChange={(e) =>
-                      setSignature(
-                        e.target.value
-                      )
-                    }
-                    placeholder="Type your signature"
-                  />
-
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                   <input
                     type="number"
-                    min="1"
-                    value={signaturePage}
-                    onChange={(e) =>
-                      setSignaturePage(
-                        e.target.value
-                      )
-                    }
-                    placeholder="Page number"
+                    value={signatureX}
+                    onChange={(e) => setSignatureX(e.target.value)}
+                    placeholder="X position"
                   />
-
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns:
-                        "1fr 1fr",
-                      gap: 12,
-                    }}
-                  >
-
-                    <input
-                      type="number"
-                      value={signatureX}
-                      onChange={(e) =>
-                        setSignatureX(
-                          e.target.value
-                        )
-                      }
-                      placeholder="X position"
-                    />
-
-                    <input
-                      type="number"
-                      value={signatureY}
-                      onChange={(e) =>
-                        setSignatureY(
-                          e.target.value
-                        )
-                      }
-                      placeholder="Y position"
-                    />
-
-                  </div>
-
-                  <p>
-                    Signature position uses PDF coordinates.
-                  </p>
-
+                  <input
+                    type="number"
+                    value={signatureY}
+                    onChange={(e) => setSignatureY(e.target.value)}
+                    placeholder="Y position"
+                  />
                 </div>
 
-              )}
-
-            {/* CONVERSION INFO */}
-
-            {[
-              "word-to-pdf",
-              "powerpoint-to-pdf",
-              "excel-to-pdf",
-              "html-to-pdf",
-              "pdf-to-pdfa",
-            ].includes(id) &&
-              files.length > 0 && (
-
-                <div className="securityBox">
-
-                  <h3>
-                    {tool.name}
-                  </h3>
-
-                  <p>
-                    Your file will be processed
-                    directly in the browser.
-                  </p>
-
-                  {id === "pdf-to-pdfa" && (
-                    <p>
-                      The browser creates an
-                      archival-style PDF copy.
-                    </p>
-                  )}
-
-                </div>
-
-              )}
-
-            {/* ERROR */}
-
-            {msg && (
-
-              <div className="notice">
-                {msg}
+                <p>Signature position uses PDF coordinates.</p>
               </div>
-
             )}
 
-            {/* PROCESS */}
+            {["word-to-pdf", "powerpoint-to-pdf", "excel-to-pdf", "html-to-pdf", "pdf-to-pdfa"].includes(id) &&
+              files.length > 0 && (
+                <div className="securityBox">
+                  <h3>{tool.name}</h3>
+                  <p>Your file will be processed directly in the browser.</p>
+                  {id === "pdf-to-pdfa" && (
+                    <p>The browser creates an archival-style PDF copy; it is not a certified PDF/A file.</p>
+                  )}
+                </div>
+              )}
 
-            <button
-              className="process"
-              disabled={
-                !files.length ||
-                busy
-              }
-              onClick={run}
-            >
+            {msg && <div className="notice">{msg}</div>}
 
-              {busy
-                ? "Processing..."
-                : done
-                ? "Process Again"
-                : "Process File"}
-
-              <ArrowDownToLine
-                size={19}
-              />
-
+            <button className="process" disabled={!files.length || busy} onClick={run}>
+              {busy ? "Processing..." : done ? "Process Again" : "Process File"}
+              <ArrowDownToLine size={19} />
             </button>
 
-            {/* SUCCESS */}
-
             {done && (
-
               <div className="success">
-
                 <Check />
-
-                Your file was created
-                and downloaded successfully.
-
+                Your file was created and downloaded successfully.
               </div>
-
             )}
-
           </div>
 
+          <section className="toolInfo">
+            <h2>{content.heading}</h2>
+            <p>{content.text}</p>
+
+            {content.howTo?.length > 0 && (
+              <div className="howTo">
+                <h3>How to {tool.name.toLowerCase()}</h3>
+                <ol>
+                  {content.howTo.map((step, index) => (
+                    <li key={index}>{step}</li>
+                  ))}
+                </ol>
+              </div>
+            )}
+
+            {content.faqs?.length > 0 && (
+              <div className="faq-section">
+                <h3>Frequently asked questions</h3>
+                {content.faqs.map(([question, answer]) => (
+                  <div className="faq-item" key={question}>
+                    <h4>{question}</h4>
+                    <p>{answer}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
         </div>
-
       </main>
-
       <Footer />
     </>
   );
@@ -4351,91 +2032,74 @@ metaDescription.content = seo.description;
 ========================================================= */
 
 function Tools() {
-
   return (
     <>
       <Header />
-
       <main className="section container allTools">
+        <span className="eyebrow">DESIPDF</span>
+        <h1>All PDF Tools</h1>
 
-        <span className="eyebrow">
-          DESIPDF
-        </span>
-
-        <h1>
-          All PDF Tools
-        </h1>
         <div className="seo-content">
-  <p>
-    DesiPDF is a free online PDF toolkit that helps you manage your
-    documents quickly and easily. Merge, split, compress, convert,
-    rotate, watermark, sign and protect PDF files directly in your browser.
-  </p>
+          <p>
+            DesiPDF is a free online PDF toolkit that helps you manage your
+            documents quickly and easily. Merge, split, compress, convert,
+            rotate, watermark, sign and protect PDF files directly in your browser.
+          </p>
+          <p>
+            Choose a PDF tool below to get started. DesiPDF is designed to make
+            everyday PDF tasks simple without requiring complicated software.
+          </p>
+        </div>
 
-  <p>
-    Choose a PDF tool below to get started. DesiPDF is designed to make
-    everyday PDF tasks simple without requiring complicated software.
-  </p>
-</div>
-
-        <p className="lead">
-          Choose the tool you need.
-        </p>
+        <p className="lead">Choose the tool you need.</p>
 
         <div className="toolGrid">
-
-          {tools.map(
-            (tool) => (
-              <ToolCard
-                key={tool.id}
-                tool={tool}
-              />
-            )
-          )}
-
+          {tools.map((tool) => (
+            <ToolCard key={tool.id} tool={tool} />
+          ))}
         </div>
+
         <section className="faq-section">
-  <h2>Frequently Asked Questions About PDF Tools</h2>
+          <h2>Frequently Asked Questions About PDF Tools</h2>
 
-  <div className="faq-item">
-    <h3>Are DesiPDF tools free?</h3>
-    <p>
-      Yes. DesiPDF provides free online PDF tools for common document
-      tasks such as merging, splitting, compressing and converting PDFs.
-    </p>
-  </div>
+          <div className="faq-item">
+            <h3>Are DesiPDF tools free?</h3>
+            <p>
+              Yes. DesiPDF provides free online PDF tools for common document
+              tasks such as merging, splitting, compressing and converting PDFs.
+            </p>
+          </div>
 
-  <div className="faq-item">
-    <h3>Can I use DesiPDF without installing software?</h3>
-    <p>
-      Yes. DesiPDF is designed to work directly in your web browser,
-      so you can access the available PDF tools online.
-    </p>
-  </div>
+          <div className="faq-item">
+            <h3>Can I use DesiPDF without installing software?</h3>
+            <p>
+              Yes. DesiPDF is designed to work directly in your web browser,
+              so you can access the available PDF tools online.
+            </p>
+          </div>
 
-  <div className="faq-item">
-    <h3>What PDF tools are available?</h3>
-    <p>
-      DesiPDF includes tools for merging, splitting, compressing,
-      converting, rotating, watermarking, signing and protecting PDF files.
-    </p>
-  </div>
+          <div className="faq-item">
+            <h3>What PDF tools are available?</h3>
+            <p>
+              DesiPDF includes tools for merging, splitting, compressing,
+              converting, rotating, watermarking, signing and protecting PDF files.
+            </p>
+          </div>
 
-  <div className="faq-item">
-    <h3>Can I use DesiPDF on a phone?</h3>
-    <p>
-      Yes. DesiPDF is designed with a responsive interface so the website
-      can be used on desktop and mobile browsers.
-    </p>
-  </div>
-</section>
-
+          <div className="faq-item">
+            <h3>Can I use DesiPDF on a phone?</h3>
+            <p>
+              Yes. DesiPDF is designed with a responsive interface so the website
+              can be used on desktop and mobile browsers.
+            </p>
+          </div>
+        </section>
       </main>
-
       <Footer />
     </>
   );
 }
+
 /* =========================================================
    LOADING SCREEN
 ========================================================= */
@@ -4444,10 +2108,7 @@ function LoadingScreen() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 1800);
-
+    const timer = setTimeout(() => setLoading(false), 1800);
     return () => clearTimeout(timer);
   }, []);
 
@@ -4456,7 +2117,6 @@ function LoadingScreen() {
   return (
     <div className="loadingScreen">
       <div className="loadingContent">
-
         <div className="loadingLogo">
           <div className="pdfShape">
             <span>PDF</span>
@@ -4472,14 +2132,15 @@ function LoadingScreen() {
         <div className="loadingBar">
           <div className="loadingProgress"></div>
         </div>
-
       </div>
     </div>
   );
 }
+
 /* =========================================================
    APP
 ========================================================= */
+
 function App() {
   useEffect(() => {
     const schemaId = "desipdf-website-schema";
@@ -4497,65 +2158,41 @@ function App() {
       "@graph": [
         {
           "@type": "Organization",
-          "@id": "https://desipdf.online/#organization",
-          "name": "DesiPDF",
-          "url": "https://desipdf.online/"
+          "@id": `${SITE_URL}/#organization`,
+          name: "DesiPDF",
+          url: `${SITE_URL}/`,
         },
         {
           "@type": "WebSite",
-          "@id": "https://desipdf.online/#website",
-          "name": "DesiPDF",
-          "url": "https://desipdf.online/",
-          "publisher": {
-            "@id": "https://desipdf.online/#organization"
-          },
-          "description": "Free online PDF tools to merge, split, compress, convert, rotate, watermark, sign and protect PDF files."
-        }
-      ]
+          "@id": `${SITE_URL}/#website`,
+          name: "DesiPDF",
+          url: `${SITE_URL}/`,
+          publisher: { "@id": `${SITE_URL}/#organization` },
+          description:
+            "Free online PDF tools to merge, split, compress, convert, rotate, watermark, sign and protect PDF files.",
+        },
+      ],
     });
   }, []);
 
   return (
     <>
       <LoadingScreen />
-
       <Routes>
-
-        <Route
-          path="/"
-          element={<Home />}
-        />
-
-        <Route
-          path="/tools"
-          element={<Tools />}
-        />
-
-        <Route
-          path="/tool/:id"
-          element={<ToolPage />}
-        />
-
-        <Route
-          path="*"
-          element={<Home />}
-        />
-
+        <Route path="/" element={<Home />} />
+        <Route path="/tools" element={<Tools />} />
+        <Route path="/tool/:id" element={<ToolPage />} />
+        <Route path="*" element={<Home />} />
       </Routes>
     </>
   );
 }
 
-
 /* =========================================================
    START APP
 ========================================================= */
 
-createRoot(
-  document.getElementById(
-    "root"
-  )
-).render(
+createRoot(document.getElementById("root")).render(
   <BrowserRouter>
     <App />
   </BrowserRouter>
