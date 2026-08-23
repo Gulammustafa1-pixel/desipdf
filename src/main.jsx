@@ -2746,11 +2746,268 @@ function parsePageNumbers(
 /* =========================================================
    TOOL PAGE
 ========================================================= */
+const TOOL_SEO_CONTENT = {
+  "merge-pdf": {
+    heading: "Merge PDF Online",
+    intro: "Merge multiple PDF files into one document online with DesiPDF. Combine your PDF files quickly and easily without installing software.",
+    howTo: [
+      "Upload the PDF files you want to combine.",
+      "Arrange the files in the order you need.",
+      "Click the merge button to combine your PDFs.",
+      "Download your merged PDF."
+    ],
+    faqs: [
+      ["Can I merge multiple PDF files?", "Yes. DesiPDF lets you combine multiple PDF files into one document."],
+      ["Is the Merge PDF tool free?", "Yes. DesiPDF provides the Merge PDF tool free online."],
+      ["Do I need to install software?", "No. You can use the tool directly in your web browser."]
+    ]
+  },
 
+  "split-pdf": {
+    heading: "Split PDF Online",
+    intro: "Split PDF files into separate documents with DesiPDF. Extract the pages you need from a PDF quickly using your browser.",
+    howTo: [
+      "Upload your PDF file.",
+      "Select the pages or page ranges you want to split.",
+      "Start the PDF splitting process.",
+      "Download your separated PDF files."
+    ],
+    faqs: [
+      ["Can I split a PDF by pages?", "Yes. You can select pages or page ranges from your PDF."],
+      ["Is Split PDF free?", "Yes. DesiPDF provides a free online PDF splitting tool."],
+      ["Can I use it on mobile?", "Yes. The tool works in modern desktop and mobile browsers."]
+    ]
+  },
+
+  "compress-pdf": {
+    heading: "Compress PDF Online",
+    intro: "Reduce the file size of your PDF documents with DesiPDF. Compress PDF files online while making them easier to store and share.",
+    howTo: [
+      "Upload your PDF file.",
+      "Start the compression process.",
+      "Wait for your compressed PDF to be generated.",
+      "Download the smaller PDF file."
+    ],
+    faqs: [
+      ["What does PDF compression do?", "PDF compression reduces the file size of a PDF to make it easier to store and share."],
+      ["Is PDF compression free?", "Yes. DesiPDF offers a free online PDF compression tool."],
+      ["Can I compress PDFs from my phone?", "Yes. You can use the tool from a supported mobile browser."]
+    ]
+  },
+
+  "jpg-to-pdf": {
+    heading: "JPG to PDF Converter",
+    intro: "Convert JPG images into PDF documents online with DesiPDF. Create PDF files from your images quickly and easily.",
+    howTo: [
+      "Upload your JPG images.",
+      "Arrange the images if needed.",
+      "Start the conversion.",
+      "Download your PDF document."
+    ],
+    faqs: [
+      ["Can I convert JPG images to PDF?", "Yes. DesiPDF converts JPG images into PDF documents online."],
+      ["Is JPG to PDF free?", "Yes. The JPG to PDF converter is available online for free."],
+      ["Can I convert multiple images?", "The tool can process the supported image files you upload."]
+    ]
+  },
+
+  "pdf-to-jpg": {
+    heading: "PDF to JPG Converter",
+    intro: "Convert PDF pages into JPG images online with DesiPDF. Turn your PDF pages into image files directly in your browser.",
+    howTo: [
+      "Upload your PDF document.",
+      "Start the PDF to JPG conversion.",
+      "Wait for the pages to be converted.",
+      "Download your JPG images."
+    ],
+    faqs: [
+      ["Can I convert PDF pages to JPG?", "Yes. DesiPDF can convert supported PDF pages into JPG images."],
+      ["Is PDF to JPG free?", "Yes. DesiPDF provides a free online PDF to JPG converter."],
+      ["Do I need special software?", "No. You can use the converter directly in your browser."]
+    ]
+  },
+
+  "pdf-to-word": {
+    heading: "PDF to Word Converter",
+    intro: "Convert PDF documents into editable Word files with DesiPDF. Use the online converter directly from your browser.",
+    howTo: [
+      "Upload your PDF file.",
+      "Start the PDF to Word conversion.",
+      "Wait for the conversion to finish.",
+      "Download your Word document."
+    ],
+    faqs: [
+      ["Can I convert PDF to Word online?", "Yes. DesiPDF provides an online PDF to Word conversion tool."],
+      ["Is PDF to Word free?", "Yes. DesiPDF offers the tool online for free."],
+      ["Can I edit the converted Word file?", "The converted file is intended to be used as an editable Word document."]
+    ]
+  },
+
+  "pdf-to-powerpoint": {
+    heading: "PDF to PowerPoint Converter",
+    intro: "Convert PDF documents into PowerPoint presentations online with DesiPDF.",
+    howTo: [
+      "Upload your PDF.",
+      "Start the PDF to PowerPoint conversion.",
+      "Wait for processing to complete.",
+      "Download your PowerPoint presentation."
+    ],
+    faqs: [
+      ["Can I convert PDF to PowerPoint?", "Yes. DesiPDF provides an online PDF to PowerPoint converter."],
+      ["Is the converter free?", "Yes. The tool is available online for free."],
+      ["Do I need PowerPoint installed?", "You can convert the file online without installing PowerPoint on the conversion page."]
+    ]
+  },
+
+  "rotate-pdf": {
+    heading: "Rotate PDF Online",
+    intro: "Rotate PDF pages online with DesiPDF. Correct the orientation of your PDF documents quickly.",
+    howTo: [
+      "Upload your PDF.",
+      "Choose the page rotation you need.",
+      "Apply the rotation.",
+      "Download the rotated PDF."
+    ],
+    faqs: [
+      ["Can I rotate individual PDF pages?", "The available rotation options depend on the tool interface and selected pages."],
+      ["Is Rotate PDF free?", "Yes. DesiPDF provides a free online Rotate PDF tool."],
+      ["Can I rotate a PDF without software?", "Yes. You can use the tool directly in your browser."]
+    ]
+  },
+
+  "watermark-pdf": {
+    heading: "Add Watermark to PDF Online",
+    intro: "Add a watermark to PDF documents online with DesiPDF. Protect and label your PDF files directly in your browser.",
+    howTo: [
+      "Upload your PDF.",
+      "Enter or choose your watermark.",
+      "Apply the watermark to your document.",
+      "Download the watermarked PDF."
+    ],
+    faqs: [
+      ["Can I add a watermark to a PDF?", "Yes. DesiPDF lets you add a watermark to supported PDF documents."],
+      ["Is the Watermark PDF tool free?", "Yes. The tool is available online for free."],
+      ["Can I use text as a watermark?", "The available watermark options depend on the current tool interface."]
+    ]
+  },
+
+  "page-numbers": {
+    heading: "Add Page Numbers to PDF",
+    intro: "Add page numbers to PDF documents online with DesiPDF. Organize your PDF pages quickly without installing software.",
+    howTo: [
+      "Upload your PDF.",
+      "Choose the page numbering options.",
+      "Apply the page numbers.",
+      "Download the updated PDF."
+    ],
+    faqs: [
+      ["Can I add page numbers to a PDF?", "Yes. DesiPDF provides an online page numbering tool."],
+      ["Is it free?", "Yes. the DesiPDF page numbering tool is available online for free."],
+      ["Can I use the tool in a browser?", "Yes. It works directly in supported web browsers."]
+    ]
+  },
+
+  "remove-pages": {
+    heading: "Remove Pages from PDF",
+    intro: "Remove unwanted pages from PDF files online with DesiPDF. Create a cleaner PDF by deleting pages you do not need.",
+    howTo: [
+      "Upload your PDF.",
+      "Select the pages you want to remove.",
+      "Apply the changes.",
+      "Download your updated PDF."
+    ],
+    faqs: [
+      ["Can I delete pages from a PDF?", "Yes. DesiPDF lets you remove unwanted PDF pages."],
+      ["Is Remove Pages free?", "Yes. The tool is available online for free."],
+      ["Can I remove multiple pages?", "You can select the supported pages you want to remove."]
+    ]
+  },
+
+  "extract-pages": {
+    heading: "Extract Pages from PDF",
+    intro: "Extract selected pages from PDF documents online with DesiPDF. Create a new PDF containing only the pages you need.",
+    howTo: [
+      "Upload your PDF.",
+      "Select the pages you want to extract.",
+      "Start the extraction process.",
+      "Download the new PDF."
+    ],
+    faqs: [
+      ["Can I extract specific PDF pages?", "Yes. You can select the pages you need from a supported PDF."],
+      ["Is Extract PDF Pages free?", "Yes. DesiPDF provides the tool online for free."],
+      ["Will the original PDF be changed?", "The extraction process creates a separate output document."]
+    ]
+  },
+
+  "reorder-pages": {
+    heading: "Reorder PDF Pages Online",
+    intro: "Rearrange PDF pages online with DesiPDF. Put your document pages into the order you need.",
+    howTo: [
+      "Upload your PDF.",
+      "Arrange the pages in your preferred order.",
+      "Apply the new page order.",
+      "Download your reordered PDF."
+    ],
+    faqs: [
+      ["Can I change the order of PDF pages?", "Yes. DesiPDF provides an online PDF page reordering tool."],
+      ["Is Reorder PDF free?", "Yes. The tool is available online for free."],
+      ["Do I need to install software?", "No. You can use the tool directly in your browser."]
+    ]
+  },
+
+  "sign-pdf": {
+    heading: "Sign PDF Online",
+    intro: "Sign PDF documents online with DesiPDF. Add your signature to supported PDF files directly in your browser.",
+    howTo: [
+      "Upload your PDF.",
+      "Add your signature using the available options.",
+      "Place the signature where needed.",
+      "Download the signed PDF."
+    ],
+    faqs: [
+      ["Can I sign a PDF online?", "Yes. DesiPDF provides an online PDF signing tool."],
+      ["Is Sign PDF free?", "Yes. The tool is available online for free."],
+      ["Can I use the tool without installing software?", "Yes. You can use it directly in a supported browser."]
+    ]
+  },
+
+  "protect-pdf": {
+    heading: "Protect PDF with Password",
+    intro: "Protect PDF documents online with DesiPDF. Add protection to supported PDF files directly from your browser.",
+    howTo: [
+      "Upload your PDF.",
+      "Enter the required protection settings.",
+      "Apply protection to the PDF.",
+      "Download your protected PDF."
+    ],
+    faqs: [
+      ["Can I protect a PDF online?", "Yes. DesiPDF provides an online PDF protection tool."],
+      ["Is Protect PDF free?", "Yes. The tool is available online for free."],
+      ["Why protect a PDF?", "PDF protection can help restrict access to documents according to the supported security options."]
+    ]
+  },
+
+  "unlock-pdf": {
+    heading: "Unlock PDF Online",
+    intro: "Unlock supported PDF files online with DesiPDF when you have permission to modify or access the document.",
+    howTo: [
+      "Upload the supported PDF.",
+      "Provide the required information if requested.",
+      "Start the unlocking process.",
+      "Download the resulting PDF."
+    ],
+    faqs: [
+      ["Can I unlock a protected PDF?", "DesiPDF can process supported PDFs when the required access is available."],
+      ["Is Unlock PDF free?", "Yes. The tool is available online for free."],
+      ["Should I unlock a PDF I do not own?", "Only unlock or modify documents when you have the necessary permission."]
+    ]
+  }
+};
 function ToolPage() {
 
   const { id } =
     useParams();
+    const seoContent = TOOL_SEO_CONTENT[id];
     const toolSEO = {
   "merge-pdf": {
     title: "Merge PDF Online Free — DesiPDF",
