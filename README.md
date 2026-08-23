@@ -1,6 +1,6 @@
-# PDF Master
+# Desi PDF
 
-A modern iLovePDF-inspired PDF toolkit built with React + Vite.
+A modern PDF toolkit built with React + Vite.
 
 ## Run locally
 
@@ -25,6 +25,4 @@ Split, Compress, PDF to JPG, Word to PDF, Watermark, Protect, Unlock, Page Numbe
 
 Push this folder to GitHub and import the repository into Vercel. The build command is `npm run build` and the output directory is `dist`.
 
-## Important
 
-Do not copy iLovePDF branding, logo, text, illustrations, or proprietary assets. PDF Master is an independent product inspired by the general online-PDF-tool category.
